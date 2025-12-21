@@ -13,9 +13,12 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-vue-next';
+import { Link, usePage } from '@inertiajs/vue3';
+import { BookOpen, Folder, LayoutGrid, Users, Building2, Calendar } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
+
+const page = usePage();
+const user = page.props.auth.user;
 
 const mainNavItems: NavItem[] = [
     {
@@ -24,6 +27,26 @@ const mainNavItems: NavItem[] = [
         icon: LayoutGrid,
     },
 ];
+
+if (user.role === 'superadmin' || user.role === 'admin') {
+    mainNavItems.push(
+        {
+            title: 'Events',
+            href: '/admin/events',
+            icon: Calendar,
+        },
+        {
+            title: 'Event Spaces',
+            href: '/admin/event-spaces',
+            icon: Building2,
+        },
+        {
+            title: 'Users',
+            href: '/admin/users',
+            icon: Users,
+        }
+    );
+}
 
 const footerNavItems: NavItem[] = [
     {

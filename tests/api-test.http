@@ -1,0 +1,39 @@
+### Get all event spaces
+GET http://localhost:8000/api/v1/event-spaces
+
+### Get specific event space
+GET http://localhost:8000/api/v1/event-spaces/1
+
+### Get all events
+GET http://localhost:8000/api/v1/events
+
+### Get specific event
+GET http://localhost:8000/api/v1/events/1
+
+### Check availability
+POST http://localhost:8000/api/v1/events/check-availability
+Content-Type: application/json
+
+{
+  "event_space_id": 1,
+  "start_date": "2025-01-15",
+  "end_date": "2025-01-17"
+}
+
+### Create booking (requires auth)
+POST http://localhost:8000/api/v1/bookings
+Authorization: Bearer YOUR_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "event_space_id": 1,
+  "title": "Corporate Event",
+  "description": "Annual meeting",
+  "client_name": "John Doe",
+  "client_email": "john@company.com",
+  "client_phone": "+1234567890",
+  "start_date": "2025-02-01",
+  "end_date": "2025-02-03",
+  "start_time": "09:00",
+  "end_time": "17:00"
+}
