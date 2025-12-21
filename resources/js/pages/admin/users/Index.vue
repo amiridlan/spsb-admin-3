@@ -12,8 +12,16 @@ interface User {
     role: string;
 }
 
+interface Pagination {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+}
+
 interface Props {
     users: User[];
+    pagination?: Pagination;
 }
 
 const props = defineProps<Props>();

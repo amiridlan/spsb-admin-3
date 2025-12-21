@@ -24,7 +24,13 @@ class UserController extends Controller
             ->paginate(20);
 
         return Inertia::render('admin/users/Index', [
-            'users' => $users,
+            'users' => $users->items(), // Get just the data array
+            'pagination' => [
+                'current_page' => $users->currentPage(),
+                'last_page' => $users->lastPage(),
+                'per_page' => $users->perPage(),
+                'total' => $users->total(),
+            ],
         ]);
     }
 
