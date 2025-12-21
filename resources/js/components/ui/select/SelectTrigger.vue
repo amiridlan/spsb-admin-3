@@ -5,9 +5,7 @@ import { SelectIcon, SelectTrigger } from 'reka-ui';
 import { ChevronDown } from 'lucide-vue-next';
 import { cn } from '@/lib/utils';
 
-const props = defineProps
-    SelectTriggerProps & { class?: HTMLAttributes['class'] }
->();
+const props = defineProps<SelectTriggerProps & { class?: HTMLAttributes['class'] }>();
 </script>
 
 <template>
