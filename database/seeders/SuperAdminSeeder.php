@@ -14,7 +14,6 @@ class SuperAdminSeeder extends Seeder
             ['email' => 'superadmin@example.com'],
             [
                 'name' => 'Super Admin',
-                'username' => 'superadmin',
                 'password' => Hash::make('password'),
                 'role' => 'superadmin',
                 'email_verified_at' => now(),
@@ -25,7 +24,6 @@ class SuperAdminSeeder extends Seeder
             ['email' => 'admin@example.com'],
             [
                 'name' => 'Admin User',
-                'username' => 'admin',
                 'password' => Hash::make('password'),
                 'role' => 'admin',
                 'email_verified_at' => now(),
@@ -36,7 +34,6 @@ class SuperAdminSeeder extends Seeder
             ['email' => 'staff@example.com'],
             [
                 'name' => 'Staff User',
-                'username' => 'staff',
                 'password' => Hash::make('password'),
                 'role' => 'staff',
                 'email_verified_at' => now(),

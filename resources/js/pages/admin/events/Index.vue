@@ -59,13 +59,23 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const statusFilter = ref(props.filters.status || '');
-const spaceFilter = ref(props.filters.space?.toString() || '');
+// Use a special string constant for "all" filters
+const ALL_STATUS = '__all_status__';
+const ALL_SPACE = '__all_space__';
+
+const statusFilter = ref(props.filters.status || ALL_STATUS);
+const spaceFilter = ref(props.filters.space?.toString() || ALL_SPACE);
 
 watch([statusFilter, spaceFilter], ([status, space]) => {
     const params: Record<string, string> = {};
-    if (status) params.status = status;
-    if (space) params.space = space;
+
+    // Only add to params if it's not the "all" option
+    if (status && status !== ALL_STATUS) {
+        params.status = status;
+    }
+    if (space && space !== ALL_SPACE) {
+        params.space = space;
+    }
 
     router.get('/admin/events', params, {
         preserveState: true,
@@ -121,7 +131,7 @@ const breadcrumbs = [
                         <SelectValue placeholder="Filter by status" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="">All Statuses</SelectItem>
+                        <SelectItem :value="ALL_STATUS">All Statuses</SelectItem>
                         <SelectItem value="pending">Pending</SelectItem>
                         <SelectItem value="confirmed">Confirmed</SelectItem>
                         <SelectItem value="completed">Completed</SelectItem>
@@ -134,7 +144,7 @@ const breadcrumbs = [
                         <SelectValue placeholder="Filter by space" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="">All Spaces</SelectItem>
+                        <SelectItem :value="ALL_SPACE">All Spaces</SelectItem>
                         <SelectItem
                             v-for="space in spaces"
                             :key="space.id"

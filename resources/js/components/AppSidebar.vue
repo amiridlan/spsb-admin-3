@@ -15,38 +15,46 @@ import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 import { BookOpen, Folder, LayoutGrid, Users, Building2, Calendar } from 'lucide-vue-next';
+import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 
 const page = usePage();
-const user = page.props.auth.user;
 
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-];
+// Make mainNavItems a computed property so it's reactive
+const mainNavItems = computed<NavItem[]>(() => {
+    const user = page.props.auth?.user;
 
-if (user.role === 'superadmin' || user.role === 'admin') {
-    mainNavItems.push(
+    const items: NavItem[] = [
         {
-            title: 'Events',
-            href: '/admin/events',
-            icon: Calendar,
+            title: 'Dashboard',
+            href: dashboard(),
+            icon: LayoutGrid,
         },
-        {
-            title: 'Event Spaces',
-            href: '/admin/event-spaces',
-            icon: Building2,
-        },
-        {
-            title: 'Users',
-            href: '/admin/users',
-            icon: Users,
-        }
-    );
-}
+    ];
+
+    // Add admin menu items if user has the right role
+    if (user && (user.role === 'superadmin' || user.role === 'admin')) {
+        items.push(
+            {
+                title: 'Events',
+                href: '/admin/events',
+                icon: Calendar,
+            },
+            {
+                title: 'Event Spaces',
+                href: '/admin/event-spaces',
+                icon: Building2,
+            },
+            {
+                title: 'Users',
+                href: '/admin/users',
+                icon: Users,
+            }
+        );
+    }
+
+    return items;
+});
 
 const footerNavItems: NavItem[] = [
     {

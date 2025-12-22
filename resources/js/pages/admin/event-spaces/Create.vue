@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Form, Head } from '@inertiajs/vue3';
+import { Head, useForm } from '@inertiajs/vue3';
 import { ArrowLeft } from 'lucide-vue-next';
 
 const breadcrumbs = [
@@ -14,6 +14,23 @@ const breadcrumbs = [
     { title: 'Event Spaces', href: '/admin/event-spaces' },
     { title: 'Create', href: '/admin/event-spaces/create' },
 ];
+
+const form = useForm({
+    name: '',
+    location: '',
+    description: '',
+    capacity: null as number | null,
+    is_active: true,
+});
+
+const submit = () => {
+    form.post('/admin/event-spaces', {
+        preserveScroll: true,
+        onSuccess: () => {
+            form.reset();
+        },
+    });
+};
 </script>
 
 <template>
@@ -34,51 +51,65 @@ const breadcrumbs = [
             </div>
 
             <div class="max-w-2xl">
-                <Form
-                    action="/admin/event-spaces"
-                    method="post"
-                    class="space-y-6"
-                    v-slot="{ errors, processing }"
-                >
+                <form @submit.prevent="submit" class="space-y-6">
                     <div class="space-y-4 rounded-lg border p-6">
                         <div class="grid gap-2">
                             <Label for="name">Name *</Label>
                             <Input
                                 id="name"
-                                name="name"
+                                v-model="form.name"
                                 type="text"
                                 required
                                 autofocus
                                 placeholder="Main Hall"
+                                :aria-invalid="!!form.errors.name"
                             />
-                            <InputError :message="errors.name" />
+                            <InputError :message="form.errors.name" />
+                        </div>
+
+                        <div class="grid gap-2">
+                            <Label for="location">Location *</Label>
+                            <Input
+                                id="location"
+                                v-model="form.location"
+                                type="text"
+                                required
+                                placeholder="Building A, Floor 2"
+                                :aria-invalid="!!form.errors.location"
+                            />
+                            <InputError :message="form.errors.location" />
                         </div>
 
                         <div class="grid gap-2">
                             <Label for="description">Description</Label>
                             <Textarea
                                 id="description"
-                                name="description"
+                                v-model="form.description"
                                 rows="4"
                                 placeholder="Describe the space..."
+                                :aria-invalid="!!form.errors.description"
                             />
-                            <InputError :message="errors.description" />
+                            <InputError :message="form.errors.description" />
                         </div>
 
                         <div class="grid gap-2">
                             <Label for="capacity">Capacity</Label>
                             <Input
                                 id="capacity"
-                                name="capacity"
+                                v-model.number="form.capacity"
                                 type="number"
                                 min="1"
                                 placeholder="100"
+                                :aria-invalid="!!form.errors.capacity"
                             />
-                            <InputError :message="errors.capacity" />
+                            <InputError :message="form.errors.capacity" />
                         </div>
 
                         <div class="flex items-center space-x-2">
-                            <Checkbox id="is_active" name="is_active" :default-checked="true" />
+                            <Checkbox
+                                id="is_active"
+                                v-model:checked="form.is_active"
+                            />
                             <Label for="is_active" class="cursor-pointer">
                                 Active (available for booking)
                             </Label>
@@ -86,7 +117,7 @@ const breadcrumbs = [
                     </div>
 
                     <div class="flex gap-3">
-                        <Button type="submit" :disabled="processing">
+                        <Button type="submit" :disabled="form.processing">
                             Create Space
                         </Button>
                         <Button
@@ -97,7 +128,7 @@ const breadcrumbs = [
                             Cancel
                         </Button>
                     </div>
-                </Form>
+                </form>
             </div>
         </div>
     </AppLayout>

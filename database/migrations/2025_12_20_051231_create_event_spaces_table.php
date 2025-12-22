@@ -11,19 +11,16 @@ return new class extends Migration
         Schema::create('event_spaces', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('location');
             $table->text('description')->nullable();
             $table->integer('capacity')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            $table->boolean('is_active')->default(true)->after('id');
         });
     }
 
     public function down(): void
     {
         Schema::dropIfExists('event_spaces');
-        Schema::table('event_spaces', function (Blueprint $table) {
-            $table->dropColumn('is_active');
-        });
     }
 };

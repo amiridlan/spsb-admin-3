@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Head, Link } from '@inertiajs/vue3';
 import { ArrowLeft, Pencil, Calendar, Clock, User, Mail, Phone, Building2 } from 'lucide-vue-next';
+import { computed } from 'vue';
 
 interface EventSpace {
     id: number;
@@ -50,18 +51,19 @@ const getStatusVariant = (status: string) => {
     return variants[status] || 'outline';
 };
 
-const breadcrumbs = [
+// Make breadcrumbs computed to ensure event is available
+const breadcrumbs = computed(() => [
     { title: 'Dashboard', href: '/dashboard' },
     { title: 'Events', href: '/admin/events' },
-    { title: event.title, href: `/admin/events/${event.id}` },
-];
+    { title: props.event?.title || 'Event Details', href: `/admin/events/${props.event?.id}` },
+]);
 </script>
 
 <template>
-    <Head :title="event.title" />
+    <Head :title="event?.title || 'Event Details'" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex flex-col gap-6 p-6">
+        <div v-if="event" class="flex flex-col gap-6 p-6">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-4">
                     <Button variant="outline" size="icon" @click="$inertia.visit('/admin/events')">
@@ -152,7 +154,7 @@ const breadcrumbs = [
                             <div>
                                 <p class="text-sm font-medium">Email</p>
 
-                                    :href="`mailto:${event.client_email}`"
+                                   <a :href="`mailto:${event.client_email}`"
                                     class="text-sm text-primary hover:underline"
                                 >
                                     {{ event.client_email }}
@@ -165,7 +167,7 @@ const breadcrumbs = [
                             <div>
                                 <p class="text-sm font-medium">Phone</p>
 
-                                    :href="`tel:${event.client_phone}`"
+                                  <a  :href="`tel:${event.client_phone}`"
                                     class="text-sm text-primary hover:underline"
                                 >
                                     {{ event.client_phone }}
@@ -200,6 +202,9 @@ const breadcrumbs = [
                     </div>
                 </div>
             </div>
+        </div>
+        <div v-else class="flex items-center justify-center p-6">
+            <p class="text-muted-foreground">Loading event details...</p>
         </div>
     </AppLayout>
 </template>
