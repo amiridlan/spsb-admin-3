@@ -19,7 +19,7 @@ const page = usePage();
 
 <template>
     <SidebarGroup class="px-2 py-0">
-        <SidebarGroupLabel>Platform</SidebarGroupLabel>
+        <SidebarGroupLabel>Main Menu</SidebarGroupLabel>
         <SidebarMenu>
             <SidebarMenuItem v-for="item in items" :key="item.title">
                 <SidebarMenuButton
@@ -33,6 +33,30 @@ const page = usePage();
                     </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>
+        </SidebarMenu>
+    </SidebarGroup>
+
+    <!-- Event Space Group -->
+    <SidebarGroup class="px-2 py-0">
+        <SidebarGroupLabel>Event Space</SidebarGroupLabel>
+        <SidebarMenu>
+            <!-- Empty for now -->
+        </SidebarMenu>
+    </SidebarGroup>
+
+    <!-- CMMS Group -->
+    <SidebarGroup class="px-2 py-0">
+        <SidebarGroupLabel>CMMS</SidebarGroupLabel>
+        <SidebarMenu>
+            <!-- Empty for now -->
+        </SidebarMenu>
+    </SidebarGroup>
+
+    <!-- HRMS Group -->
+    <SidebarGroup class="px-2 py-0">
+        <SidebarGroupLabel>HRMS</SidebarGroupLabel>
+        <SidebarMenu>
+            <!-- Empty for now -->
         </SidebarMenu>
     </SidebarGroup>
 </template>
