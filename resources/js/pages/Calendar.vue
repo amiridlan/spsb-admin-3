@@ -61,11 +61,12 @@ interface Props {
 
 const props = defineProps<Props>();
 const page = usePage();
-const { getAllStatuses, getStatusColors } = useStatusColors();
+const { getAllStatuses } = useStatusColors();
 
 const calendarRef = ref<InstanceType<typeof FullCalendar> | null>(null);
-const selectedSpace = ref<string | undefined>(props.filters?.space?.toString());
-const selectedStatus = ref<string | undefined>(props.filters?.status);
+// FIXED: Use null instead of custom string constants, handle properly in watch
+const selectedSpace = ref<string | null>(props.filters?.space?.toString() ?? null);
+const selectedStatus = ref<string | null>(props.filters?.status ?? null);
 const selectedView = ref<string>(props.filters?.view || 'dayGridMonth');
 const showCancelled = ref<boolean>(props.filters?.show_cancelled ?? false);
 const filterPopoverOpen = ref(false);
@@ -242,6 +243,7 @@ function applyFilters() {
         view: selectedView.value,
     };
 
+    // FIXED: Only add to params if not null
     if (selectedSpace.value) {
         filters.space = selectedSpace.value;
     }
@@ -264,8 +266,8 @@ function applyFilters() {
 }
 
 function clearFilters() {
-    selectedSpace.value = undefined;
-    selectedStatus.value = undefined;
+    selectedSpace.value = null;
+    selectedStatus.value = null;
     showCancelled.value = false;
 
     router.get('/calendar', { view: selectedView.value }, {
@@ -370,7 +372,8 @@ const viewOptions = [
                             <SelectValue placeholder="All Spaces" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem :value="undefined">All Spaces</SelectItem>
+                            <!-- FIXED: Use empty string for "all" option -->
+                            <SelectItem value="">All Spaces</SelectItem>
                             <SelectItem
                                 v-for="space in spaces"
                                 :key="space.id"
@@ -387,7 +390,8 @@ const viewOptions = [
                             <SelectValue placeholder="All Statuses" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem :value="undefined">All Statuses</SelectItem>
+                            <!-- FIXED: Use empty string for "all" option -->
+                            <SelectItem value="">All Statuses</SelectItem>
                             <SelectItem
                                 v-for="status in allStatuses"
                                 :key="status.value"
@@ -468,7 +472,7 @@ const viewOptions = [
                     v-if="selectedSpace"
                     variant="secondary"
                     class="cursor-pointer"
-                    @click="selectedSpace = undefined; applyFilters()"
+                    @click="selectedSpace = null; applyFilters()"
                 >
                     Space: {{ spaces.find(s => s.id.toString() === selectedSpace)?.name }}
                     <X class="ml-1 h-3 w-3" />
@@ -477,7 +481,7 @@ const viewOptions = [
                     v-if="selectedStatus"
                     variant="secondary"
                     class="cursor-pointer"
-                    @click="selectedStatus = undefined; applyFilters()"
+                    @click="selectedStatus = null; applyFilters()"
                 >
                     Status: {{ allStatuses.find(s => s.value === selectedStatus)?.config.label }}
                     <X class="ml-1 h-3 w-3" />
