@@ -61,12 +61,11 @@ interface Props {
 
 const props = defineProps<Props>();
 const page = usePage();
-const { getAllStatuses } = useStatusColors();
+const { getAllStatuses, getStatusColors } = useStatusColors();
 
 const calendarRef = ref<InstanceType<typeof FullCalendar> | null>(null);
-// FIXED: Use null instead of custom string constants, handle properly in watch
-const selectedSpace = ref<string | null>(props.filters?.space?.toString() ?? null);
-const selectedStatus = ref<string | null>(props.filters?.status ?? null);
+const selectedSpace = ref<string>(props.filters?.space?.toString() || 'all');
+const selectedStatus = ref<string>(props.filters?.status || 'all');
 const selectedView = ref<string>(props.filters?.view || 'dayGridMonth');
 const showCancelled = ref<boolean>(props.filters?.show_cancelled ?? false);
 const filterPopoverOpen = ref(false);
@@ -243,12 +242,11 @@ function applyFilters() {
         view: selectedView.value,
     };
 
-    // FIXED: Only add to params if not null
-    if (selectedSpace.value) {
+    if (selectedSpace.value && selectedSpace.value !== 'all') {
         filters.space = selectedSpace.value;
     }
 
-    if (selectedStatus.value) {
+    if (selectedStatus.value && selectedStatus.value !== 'all') {
         filters.status = selectedStatus.value;
     }
 
@@ -266,8 +264,8 @@ function applyFilters() {
 }
 
 function clearFilters() {
-    selectedSpace.value = null;
-    selectedStatus.value = null;
+    selectedSpace.value = 'all';
+    selectedStatus.value = 'all';
     showCancelled.value = false;
 
     router.get('/calendar', { view: selectedView.value }, {
@@ -281,8 +279,8 @@ function clearFilters() {
 
 const activeFilterCount = computed(() => {
     let count = 0;
-    if (selectedSpace.value) count++;
-    if (selectedStatus.value) count++;
+    if (selectedSpace.value && selectedSpace.value !== 'all') count++;
+    if (selectedStatus.value && selectedStatus.value !== 'all') count++;
     if (showCancelled.value) count++;
     return count;
 });
@@ -372,8 +370,7 @@ const viewOptions = [
                             <SelectValue placeholder="All Spaces" />
                         </SelectTrigger>
                         <SelectContent>
-                            <!-- FIXED: Use empty string for "all" option -->
-                            <SelectItem value="">All Spaces</SelectItem>
+                            <SelectItem value="all">All Spaces</SelectItem>
                             <SelectItem
                                 v-for="space in spaces"
                                 :key="space.id"
@@ -390,8 +387,7 @@ const viewOptions = [
                             <SelectValue placeholder="All Statuses" />
                         </SelectTrigger>
                         <SelectContent>
-                            <!-- FIXED: Use empty string for "all" option -->
-                            <SelectItem value="">All Statuses</SelectItem>
+                            <SelectItem value="all">All Statuses</SelectItem>
                             <SelectItem
                                 v-for="status in allStatuses"
                                 :key="status.value"
@@ -469,19 +465,19 @@ const viewOptions = [
             <!-- Active Filters Display -->
             <div v-if="activeFilterCount > 0" class="flex flex-wrap gap-2">
                 <Badge
-                    v-if="selectedSpace"
+                    v-if="selectedSpace && selectedSpace !== 'all'"
                     variant="secondary"
                     class="cursor-pointer"
-                    @click="selectedSpace = null; applyFilters()"
+                    @click="selectedSpace = 'all'; applyFilters()"
                 >
                     Space: {{ spaces.find(s => s.id.toString() === selectedSpace)?.name }}
                     <X class="ml-1 h-3 w-3" />
                 </Badge>
                 <Badge
-                    v-if="selectedStatus"
+                    v-if="selectedStatus && selectedStatus !== 'all'"
                     variant="secondary"
                     class="cursor-pointer"
-                    @click="selectedStatus = null; applyFilters()"
+                    @click="selectedStatus = 'all'; applyFilters()"
                 >
                     Status: {{ allStatuses.find(s => s.value === selectedStatus)?.config.label }}
                     <X class="ml-1 h-3 w-3" />

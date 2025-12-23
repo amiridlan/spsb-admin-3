@@ -144,9 +144,9 @@ All API responses must follow the defined structure.
 
 ### Calendar API
 
-- [ ] (S4-07) Create `GET /api/v1/events/calendar`
-- [ ] (S4-08) Create `GET /api/v1/events/calendar/month`
-- [ ] (S4-09) Format output for FullCalendar compatibility
+- [x] (S4-07) Create `GET /api/v1/events/calendar`
+- [x] (S4-08) Create `GET /api/v1/events/calendar/month`
+- [x] (S4-09) Format output for FullCalendar compatibility
 
 ---
 
