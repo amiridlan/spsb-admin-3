@@ -135,12 +135,12 @@ All API responses must follow the defined structure.
 
 ### Calendar UI
 
-- [ ] (S4-01) Install and configure FullCalendar
-- [ ] (S4-02) Build admin calendar component
-- [ ] (S4-03) Implement multi-day rendering
-- [ ] (S4-04) Add status-based color coding
-- [ ] (S4-05) Build event detail view
-- [ ] (S4-06) Add calendar filters
+- [x] (S4-01) Install and configure FullCalendar
+- [x] (S4-02) Build admin calendar component
+- [x] (S4-03) Implement multi-day rendering
+- [x] (S4-04) Add status-based color coding
+- [x] (S4-05) Build event detail view
+- [x] (S4-06) Add calendar filters
 
 ### Calendar API
 

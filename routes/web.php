@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\EventSpaceController;
 use App\Http\Controllers\Admin\EventStaffController;
 use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\Staff\AssignmentController;
 use Illuminate\Support\Facades\Route;
 
@@ -19,6 +20,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', function () {
         return inertia('Dashboard');
     })->name('dashboard');
+
+    // Calendar route - accessible to all authenticated users
+    Route::get('/calendar', [CalendarController::class, 'index'])->name('calendar');
 
     // Admin routes
     Route::middleware(['role:superadmin,admin'])->prefix('admin')->name('admin.')->group(function () {

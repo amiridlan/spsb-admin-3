@@ -29,10 +29,14 @@ class EventController extends Controller
         ]);
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
         return Inertia::render('admin/events/Create', [
             'spaces' => EventSpace::where('is_active', true)->get(),
+            'prefill' => [
+                'start_date' => $request->start_date,
+                'end_date' => $request->end_date,
+            ],
         ]);
     }
 
@@ -55,15 +59,19 @@ class EventController extends Controller
 
         $validated['created_by'] = auth()->id();
 
-        Event::create($validated);
+        $event = Event::create($validated);
 
-        return redirect()->route('admin.events.index')
+        return redirect()->route('admin.events.show', $event)
             ->with('success', 'Event created successfully.');
     }
 
     public function show(Event $event): Response
     {
-        $event->load(['eventSpace', 'creator']);
+        $event->load([
+            'eventSpace',
+            'creator',
+            'staff.user' // Load staff with user relationship
+        ]);
 
         return Inertia::render('admin/events/Show', [
             'event' => $event,
@@ -97,7 +105,7 @@ class EventController extends Controller
 
         $event->update($validated);
 
-        return redirect()->route('admin.events.index')
+        return redirect()->route('admin.events.show', $event)
             ->with('success', 'Event updated successfully.');
     }
 
