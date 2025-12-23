@@ -178,6 +178,14 @@ export default defineComponent({
             type: String as PropType<Props['filter']>,
             required: true,
         },
+        staff: {
+            type: Object as PropType<Props['staff']>,
+            required: true,
+        },
+        counts: {
+            type: Object as PropType<Props['counts']>,
+            required: true,
+        },
     },
     setup(props) {
         const getStatusVariant = (status: string) => {
