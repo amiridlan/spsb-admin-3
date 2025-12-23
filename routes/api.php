@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\BookingController;
 use App\Http\Controllers\Api\V1\EventController;
 use App\Http\Controllers\Api\V1\EventSpaceController;
 use Illuminate\Support\Facades\Route;
@@ -17,6 +18,9 @@ Route::prefix('v1')->group(function () {
     Route::get('/events', [EventController::class, 'index']);
     Route::get('/events/{event}', [EventController::class, 'show']);
     Route::post('/events/check-availability', [EventController::class, 'checkAvailability']);
+
+    // Booking staff (public read - restricted data)
+    Route::get('/bookings/{event}/staff', [BookingController::class, 'staff']);
 
     // Protected routes
     Route::middleware('auth:sanctum')->group(function () {

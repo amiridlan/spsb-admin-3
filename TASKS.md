@@ -125,7 +125,7 @@ All API responses must follow the defined structure.
 
 ### API Extensions
 
-- [ ] (S3-06) Create `GET /api/v1/bookings/{id}/staff`
+- [x] (S3-06) Create `GET /api/v1/bookings/{id}/staff`
 - [ ] (S3-07) Restrict staff data exposure
 - [ ] (S3-08) Implement booking status webhook (optional)
 
