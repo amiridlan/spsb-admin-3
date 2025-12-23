@@ -14,7 +14,7 @@ import {
 import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, Users, Building2, Calendar } from 'lucide-vue-next';
+import { BookOpen, Folder, LayoutGrid, Users, Building2, Calendar, UserCog } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 
@@ -46,11 +46,25 @@ const mainNavItems = computed<NavItem[]>(() => {
                 icon: Building2,
             },
             {
+                title: 'Staff',
+                href: '/admin/staff',
+                icon: UserCog,
+            },
+            {
                 title: 'Users',
                 href: '/admin/users',
                 icon: Users,
             }
         );
+    }
+
+     // Staff menu items (for staff, admin, and superadmin)
+    if (user && ['staff', 'admin', 'superadmin'].includes(user.role)) {
+        items.push({
+            title: 'My Assignments',
+            href: '/staff/assignments',
+            // icon: Clipboard,
+        });
     }
 
     return items;

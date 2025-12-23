@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Carbon\Carbon;
 
 class Staff extends Model
 {
@@ -49,5 +50,42 @@ class Staff extends Model
     public function hasSpecialization(string $specialization): bool
     {
         return in_array($specialization, $this->specializations ?? []);
+    }
+
+    /**
+     * Get upcoming assignments
+     */
+    public function upcomingAssignments()
+    {
+        return $this->events()
+            ->where('status', '!=', 'cancelled')
+            ->where('start_date', '>=', Carbon::today())
+            ->orderBy('start_date')
+            ->with(['eventSpace', 'creator']);
+    }
+
+    /**
+     * Get past assignments
+     */
+    public function pastAssignments()
+    {
+        return $this->events()
+            ->where('end_date', '<', Carbon::today())
+            ->orderBy('start_date', 'desc')
+            ->with(['eventSpace', 'creator']);
+    }
+
+    /**
+     * Get current assignments (ongoing events)
+     */
+    public function currentAssignments()
+    {
+        $today = Carbon::today();
+
+        return $this->events()
+            ->where('status', '!=', 'cancelled')
+            ->where('start_date', '<=', $today)
+            ->where('end_date', '>=', $today)
+            ->with(['eventSpace', 'creator']);
     }
 }

@@ -117,11 +117,11 @@ All API responses must follow the defined structure.
 
 ### Staff System
 
-- [ ] (S3-01) Create Staff model and migration
-- [ ] (S3-02) Define staff–booking relationships
-- [ ] (S3-03) Implement staff availability checker
-- [ ] (S3-04) Build assignment management UI
-- [ ] (S3-05) Build “My Assignments” staff view
+- [x] (S3-01) Create Staff model and migration
+- [x] (S3-02) Define staff–booking relationships
+- [x] (S3-03) Implement staff availability checker
+- [x] (S3-04) Build assignment management UI
+- [x] (S3-05) Build “My Assignments” staff view
 
 ### API Extensions
 
