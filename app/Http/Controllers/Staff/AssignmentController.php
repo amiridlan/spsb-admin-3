@@ -28,6 +28,7 @@ class AssignmentController extends Controller
         }
 
         $staff = $user->staffProfile;
+        $staff->load('user'); // Ensure user relationship is loaded
 
         // Get filter parameters
         $filter = $request->input('filter', 'upcoming'); // upcoming, current, past, all
@@ -67,7 +68,18 @@ class AssignmentController extends Controller
         ];
 
         return Inertia::render('staff/assignments/Index', [
-            'staff' => $staff->load('user'),
+            'staff' => [
+                'id' => $staff->id,
+                'position' => $staff->position,
+                'specializations' => $staff->specializations,
+                'is_available' => $staff->is_available,
+                'notes' => $staff->notes,
+                'user' => [
+                    'id' => $staff->user->id,
+                    'name' => $staff->user->name,
+                    'email' => $staff->user->email,
+                ],
+            ],
             'assignments' => $assignments,
             'filter' => $filter,
             'counts' => $counts,

@@ -148,113 +148,233 @@ const changeFilter = (filter: string) => {
                 </TabsList>
 
                 <TabsContent value="current" class="mt-6">
-                    <AssignmentTable :assignments="assignments" :filter="filter" />
+                    <div v-if="assignments.data.length" class="rounded-lg border">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Event</TableHead>
+                                    <TableHead>Client</TableHead>
+                                    <TableHead>Space</TableHead>
+                                    <TableHead>Dates</TableHead>
+                                    <TableHead>My Role</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead class="w-[70px]"></TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                <TableRow v-for="assignment in assignments.data" :key="assignment.id">
+                                    <TableCell class="font-medium">
+                                        {{ assignment.title }}
+                                    </TableCell>
+                                    <TableCell>{{ assignment.client_name }}</TableCell>
+                                    <TableCell>{{ assignment.event_space.name }}</TableCell>
+                                    <TableCell>
+                                        <div class="text-sm">
+                                            {{ new Date(assignment.start_date).toLocaleDateString() }}
+                                            -
+                                            {{ new Date(assignment.end_date).toLocaleDateString() }}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge v-if="assignment.pivot.role" variant="outline">
+                                            {{ assignment.pivot.role }}
+                                        </Badge>
+                                        <span v-else class="text-sm text-muted-foreground">N/A</span>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge :variant="getStatusVariant(assignment.status)">
+                                            {{ assignment.status }}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Button variant="ghost" size="icon" as-child>
+                                            <Link :href="`/staff/assignments/${assignment.id}`">
+                                                <Eye class="h-4 w-4" />
+                                            </Link>
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            </TableBody>
+                        </Table>
+                    </div>
+                    <div v-else class="rounded-lg border p-8 text-center">
+                        <p class="text-sm text-muted-foreground">
+                            No current assignments found
+                        </p>
+                    </div>
                 </TabsContent>
+
                 <TabsContent value="upcoming" class="mt-6">
-                    <AssignmentTable :assignments="assignments" :filter="filter" />
+                    <div v-if="assignments.data.length" class="rounded-lg border">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Event</TableHead>
+                                    <TableHead>Client</TableHead>
+                                    <TableHead>Space</TableHead>
+                                    <TableHead>Dates</TableHead>
+                                    <TableHead>My Role</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead class="w-[70px]"></TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                <TableRow v-for="assignment in assignments.data" :key="assignment.id">
+                                    <TableCell class="font-medium">
+                                        {{ assignment.title }}
+                                    </TableCell>
+                                    <TableCell>{{ assignment.client_name }}</TableCell>
+                                    <TableCell>{{ assignment.event_space.name }}</TableCell>
+                                    <TableCell>
+                                        <div class="text-sm">
+                                            {{ new Date(assignment.start_date).toLocaleDateString() }}
+                                            -
+                                            {{ new Date(assignment.end_date).toLocaleDateString() }}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge v-if="assignment.pivot.role" variant="outline">
+                                            {{ assignment.pivot.role }}
+                                        </Badge>
+                                        <span v-else class="text-sm text-muted-foreground">N/A</span>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge :variant="getStatusVariant(assignment.status)">
+                                            {{ assignment.status }}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Button variant="ghost" size="icon" as-child>
+                                            <Link :href="`/staff/assignments/${assignment.id}`">
+                                                <Eye class="h-4 w-4" />
+                                            </Link>
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            </TableBody>
+                        </Table>
+                    </div>
+                    <div v-else class="rounded-lg border p-8 text-center">
+                        <p class="text-sm text-muted-foreground">
+                            No upcoming assignments found
+                        </p>
+                    </div>
                 </TabsContent>
+
                 <TabsContent value="past" class="mt-6">
-                    <AssignmentTable :assignments="assignments" :filter="filter" />
+                    <div v-if="assignments.data.length" class="rounded-lg border">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Event</TableHead>
+                                    <TableHead>Client</TableHead>
+                                    <TableHead>Space</TableHead>
+                                    <TableHead>Dates</TableHead>
+                                    <TableHead>My Role</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead class="w-[70px]"></TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                <TableRow v-for="assignment in assignments.data" :key="assignment.id">
+                                    <TableCell class="font-medium">
+                                        {{ assignment.title }}
+                                    </TableCell>
+                                    <TableCell>{{ assignment.client_name }}</TableCell>
+                                    <TableCell>{{ assignment.event_space.name }}</TableCell>
+                                    <TableCell>
+                                        <div class="text-sm">
+                                            {{ new Date(assignment.start_date).toLocaleDateString() }}
+                                            -
+                                            {{ new Date(assignment.end_date).toLocaleDateString() }}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge v-if="assignment.pivot.role" variant="outline">
+                                            {{ assignment.pivot.role }}
+                                        </Badge>
+                                        <span v-else class="text-sm text-muted-foreground">N/A</span>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge :variant="getStatusVariant(assignment.status)">
+                                            {{ assignment.status }}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Button variant="ghost" size="icon" as-child>
+                                            <Link :href="`/staff/assignments/${assignment.id}`">
+                                                <Eye class="h-4 w-4" />
+                                            </Link>
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            </TableBody>
+                        </Table>
+                    </div>
+                    <div v-else class="rounded-lg border p-8 text-center">
+                        <p class="text-sm text-muted-foreground">
+                            No past assignments found
+                        </p>
+                    </div>
                 </TabsContent>
+
                 <TabsContent value="all" class="mt-6">
-                    <AssignmentTable :assignments="assignments" :filter="filter" />
+                    <div v-if="assignments.data.length" class="rounded-lg border">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Event</TableHead>
+                                    <TableHead>Client</TableHead>
+                                    <TableHead>Space</TableHead>
+                                    <TableHead>Dates</TableHead>
+                                    <TableHead>My Role</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead class="w-[70px]"></TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                <TableRow v-for="assignment in assignments.data" :key="assignment.id">
+                                    <TableCell class="font-medium">
+                                        {{ assignment.title }}
+                                    </TableCell>
+                                    <TableCell>{{ assignment.client_name }}</TableCell>
+                                    <TableCell>{{ assignment.event_space.name }}</TableCell>
+                                    <TableCell>
+                                        <div class="text-sm">
+                                            {{ new Date(assignment.start_date).toLocaleDateString() }}
+                                            -
+                                            {{ new Date(assignment.end_date).toLocaleDateString() }}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge v-if="assignment.pivot.role" variant="outline">
+                                            {{ assignment.pivot.role }}
+                                        </Badge>
+                                        <span v-else class="text-sm text-muted-foreground">N/A</span>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge :variant="getStatusVariant(assignment.status)">
+                                            {{ assignment.status }}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Button variant="ghost" size="icon" as-child>
+                                            <Link :href="`/staff/assignments/${assignment.id}`">
+                                                <Eye class="h-4 w-4" />
+                                            </Link>
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            </TableBody>
+                        </Table>
+                    </div>
+                    <div v-else class="rounded-lg border p-8 text-center">
+                        <p class="text-sm text-muted-foreground">
+                            No assignments found
+                        </p>
+                    </div>
                 </TabsContent>
             </Tabs>
         </div>
     </AppLayout>
 </template>
-
-<script lang="ts">
-import { defineComponent, PropType } from 'vue';
-
-export default defineComponent({
-    name: 'AssignmentTable',
-    props: {
-        assignments: {
-            type: Object as PropType<Props['assignments']>,
-            required: true,
-        },
-        filter: {
-            type: String as PropType<Props['filter']>,
-            required: true,
-        },
-        staff: {
-            type: Object as PropType<Props['staff']>,
-            required: true,
-        },
-        counts: {
-            type: Object as PropType<Props['counts']>,
-            required: true,
-        },
-    },
-    setup(props) {
-        const getStatusVariant = (status: string) => {
-            const variants: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {
-                pending: 'outline',
-                confirmed: 'default',
-                completed: 'secondary',
-                cancelled: 'destructive',
-            };
-            return variants[status] || 'outline';
-        };
-
-        return { getStatusVariant };
-    },
-    template: `
-        <div v-if="assignments.data.length" class="rounded-lg border">
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Event</TableHead>
-                        <TableHead>Client</TableHead>
-                        <TableHead>Space</TableHead>
-                        <TableHead>Dates</TableHead>
-                        <TableHead>My Role</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead class="w-[70px]"></TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    <TableRow v-for="assignment in assignments.data" :key="assignment.id">
-                        <TableCell class="font-medium">
-                            {{ assignment.title }}
-                        </TableCell>
-                        <TableCell>{{ assignment.client_name }}</TableCell>
-                        <TableCell>{{ assignment.event_space.name }}</TableCell>
-                        <TableCell>
-                            <div class="text-sm">
-                                {{ new Date(assignment.start_date).toLocaleDateString() }}
-                                -
-                                {{ new Date(assignment.end_date).toLocaleDateString() }}
-                            </div>
-                        </TableCell>
-                        <TableCell>
-                            <Badge v-if="assignment.pivot.role" variant="outline">
-                                {{ assignment.pivot.role }}
-                            </Badge>
-                            <span v-else class="text-sm text-muted-foreground">N/A</span>
-                        </TableCell>
-                        <TableCell>
-                            <Badge :variant="getStatusVariant(assignment.status)">
-                                {{ assignment.status }}
-                            </Badge>
-                        </TableCell>
-                        <TableCell>
-                            <Button variant="ghost" size="icon" as-child>
-                                <Link :href="'/staff/assignments/' + assignment.id">
-                                    <Eye class="h-4 w-4" />
-                                </Link>
-                            </Button>
-                        </TableCell>
-                    </TableRow>
-                </TableBody>
-            </Table>
-        </div>
-        <div v-else class="rounded-lg border p-8 text-center">
-            <p class="text-sm text-muted-foreground">
-                No {{ filter === 'all' ? '' : filter }} assignments found
-            </p>
-        </div>
-    `,
-});
-</script>
