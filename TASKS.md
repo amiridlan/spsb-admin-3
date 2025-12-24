@@ -126,7 +126,7 @@ All API responses must follow the defined structure.
 ### API Extensions
 
 - [x] (S3-06) Create `GET /api/v1/bookings/{id}/staff`
-- [ ] (S3-07) Restrict staff data exposure
+- [x] (S3-07) Restrict staff data exposure
 - [ ] (S3-08) Implement booking status webhook (optional)
 
 ---
@@ -154,8 +154,8 @@ All API responses must follow the defined structure.
 
 ### Documentation
 
-- [ ] (S5-01) Install `knuckleswtf/scribe`
-- [ ] (S5-02) Configure Scribe for Sanctum auth
+- [x] (S5-01) Install `knuckleswtf/scribe`
+- [x] (S5-02) Configure Scribe for Sanctum auth
 - [ ] (S5-03) Generate API documentation
 - [ ] (S5-04) Restrict API docs to non-production
 
@@ -178,7 +178,7 @@ All API responses must follow the defined structure.
 
 ### Dashboards & Reports
 
-- [ ] (S6-01) Build role-specific dashboards
+- [x] (S6-01) Build role-specific dashboards
 - [ ] (S6-02) Add booking metrics and statistics
 - [ ] (S6-03) Create booking reports
 - [ ] (S6-04) Implement data export (CSV/PDF)
