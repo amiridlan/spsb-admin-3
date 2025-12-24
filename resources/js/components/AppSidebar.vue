@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
 import {
@@ -41,6 +40,11 @@ const mainNavItems = computed<NavItem[]>(() => {
                 icon: Calendar,
             },
             {
+                title: 'Calendar',
+                href: '/calendar',
+                icon: Calendar, // or Calendar icon
+            },
+            {
                 title: 'Event Spaces',
                 href: '/admin/event-spaces',
                 icon: Building2,
@@ -54,6 +58,16 @@ const mainNavItems = computed<NavItem[]>(() => {
                 title: 'Users',
                 href: '/admin/users',
                 icon: Users,
+            },
+            {
+                title: 'Metrics',
+                href: '/admin/metrics',
+                icon: Folder,
+            },
+            {
+                title: 'Reports',
+                href: '/admin/reports',
+                icon: BookOpen,
             }
         );
     }
@@ -69,19 +83,6 @@ const mainNavItems = computed<NavItem[]>(() => {
 
     return items;
 });
-
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Github Repo',
-        href: 'https://github.com/laravel/vue-starter-kit',
-        icon: Folder,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#vue',
-        icon: BookOpen,
-    },
-];
 </script>
 
 <template>
@@ -103,7 +104,6 @@ const footerNavItems: NavItem[] = [
         </SidebarContent>
 
         <SidebarFooter>
-            <NavFooter :items="footerNavItems" />
             <NavUser />
         </SidebarFooter>
     </Sidebar>

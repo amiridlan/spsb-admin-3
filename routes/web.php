@@ -30,6 +30,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('events', EventController::class);
         Route::resource('staff', StaffController::class);
 
+        // Metrics and statistics
+        Route::get('metrics', [\App\Http\Controllers\Admin\MetricsController::class, 'index'])
+            ->name('metrics.index');
+
+        // Reports
+        Route::get('reports', [\App\Http\Controllers\Admin\ReportsController::class, 'index'])
+            ->name('reports.index');
+        Route::post('reports/generate', [\App\Http\Controllers\Admin\ReportsController::class, 'generate'])
+            ->name('reports.generate');
+        Route::get('reports/export/csv', [\App\Http\Controllers\Admin\ReportsController::class, 'exportCsv'])
+            ->name('reports.export.csv');
+        Route::get('reports/export/pdf', [\App\Http\Controllers\Admin\ReportsController::class, 'exportPdf'])
+            ->name('reports.export.pdf');
+
         // Event staff assignment routes
         Route::get('events/{event}/staff', [EventStaffController::class, 'index'])
             ->name('events.staff.index');
