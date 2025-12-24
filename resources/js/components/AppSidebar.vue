@@ -13,7 +13,7 @@ import {
 import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, Users, Building2, Calendar, UserCog } from 'lucide-vue-next';
+import { BookOpen, Folder, LayoutGrid, Users, Building2, Calendar, UserCog, ChartColumnIncreasingIcon, Calendar1Icon, BriefcaseBusinessIcon } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 
@@ -42,7 +42,7 @@ const mainNavItems = computed<NavItem[]>(() => {
             {
                 title: 'Calendar',
                 href: '/calendar',
-                icon: Calendar, // or Calendar icon
+                icon: Calendar1Icon, // or Calendar icon
             },
             {
                 title: 'Event Spaces',
@@ -62,7 +62,7 @@ const mainNavItems = computed<NavItem[]>(() => {
             {
                 title: 'Metrics',
                 href: '/admin/metrics',
-                icon: Folder,
+                icon: ChartColumnIncreasingIcon,
             },
             {
                 title: 'Reports',
@@ -77,7 +77,7 @@ const mainNavItems = computed<NavItem[]>(() => {
         items.push({
             title: 'My Assignments',
             href: '/staff/assignments',
-            // icon: Clipboard,
+            icon: BriefcaseBusinessIcon,
         });
     }
 

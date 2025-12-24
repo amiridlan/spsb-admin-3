@@ -195,7 +195,7 @@ const reportTypes = [
                                         <SelectValue placeholder="All Spaces" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">All Spaces</SelectItem>
+                                        <SelectItem value="all">All Spaces</SelectItem>
                                         <SelectItem
                                             v-for="space in spaces"
                                             :key="space.id"
@@ -214,7 +214,7 @@ const reportTypes = [
                                         <SelectValue placeholder="All Staff" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">All Staff</SelectItem>
+                                        <SelectItem value="all">All Staff</SelectItem>
                                         <SelectItem
                                             v-for="member in staff"
                                             :key="member.id"
@@ -233,7 +233,7 @@ const reportTypes = [
                                         <SelectValue placeholder="All Statuses" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">All Statuses</SelectItem>
+                                        <SelectItem value="all">All Statuses</SelectItem>
                                         <SelectItem value="pending">Pending</SelectItem>
                                         <SelectItem value="confirmed">Confirmed</SelectItem>
                                         <SelectItem value="completed">Completed</SelectItem>

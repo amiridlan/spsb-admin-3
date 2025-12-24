@@ -44,6 +44,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('reports/export/pdf', [\App\Http\Controllers\Admin\ReportsController::class, 'exportPdf'])
             ->name('reports.export.pdf');
 
+        // Data Exports
+        Route::prefix('export')->name('export.')->group(function () {
+            Route::get('events', [\App\Http\Controllers\Admin\ExportController::class, 'events'])
+                ->name('events');
+            Route::get('spaces', [\App\Http\Controllers\Admin\ExportController::class, 'spaces'])
+                ->name('spaces');
+            Route::get('staff', [\App\Http\Controllers\Admin\ExportController::class, 'staff'])
+                ->name('staff');
+            Route::get('calendar', [\App\Http\Controllers\Admin\ExportController::class, 'calendar'])
+                ->name('calendar');
+            Route::get('json', [\App\Http\Controllers\Admin\ExportController::class, 'json'])
+                ->name('json');
+        });
+
         // Event staff assignment routes
         Route::get('events/{event}/staff', [EventStaffController::class, 'index'])
             ->name('events.staff.index');
