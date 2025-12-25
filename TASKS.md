@@ -179,15 +179,15 @@ All API responses must follow the defined structure.
 ### Dashboards & Reports
 
 - [x] (S6-01) Build role-specific dashboards
-- [ ] (S6-02) Add booking metrics and statistics
-- [ ] (S6-03) Create booking reports
-- [ ] (S6-04) Implement data export (CSV/PDF)
+- [x] (S6-02) Add booking metrics and statistics
+- [x] (S6-03) Create booking reports
+- [x] (S6-04) Implement data export (CSV/PDF)
 
 ### System Polish
 
-- [ ] (S6-05) Add notification system
-- [ ] (S6-06) UI/UX refinements
-- [ ] (S6-07) Performance optimization
+- [x] (S6-05) Add notification system
+- [x] (S6-06) UI/UX refinements
+- [x] (S6-07) Performance optimization
 
 ### Final Validation
 
