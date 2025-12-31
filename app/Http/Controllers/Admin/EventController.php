@@ -80,15 +80,54 @@ class EventController extends Controller
 
     public function edit(Event $event): Response
     {
+        // Format the event data to ensure proper date/time format
+        $eventData = $event->load('eventSpace')->toArray();
+
+        // Ensure dates are in YYYY-MM-DD format
+        $eventData['start_date'] = $event->start_date->format('Y-m-d');
+        $eventData['end_date'] = $event->end_date->format('Y-m-d');
+
+        // Ensure times are in HH:mm format or null
+        $eventData['start_time'] = $event->start_time ?
+            (strlen($event->start_time) === 8 ? substr($event->start_time, 0, 5) : $event->start_time) :
+            null;
+        $eventData['end_time'] = $event->end_time ?
+            (strlen($event->end_time) === 8 ? substr($event->end_time, 0, 5) : $event->end_time) :
+            null;
+
         return Inertia::render('admin/events/Edit', [
-            'event' => $event->load('eventSpace'),
+            'event' => $eventData,
             'spaces' => EventSpace::where('is_active', true)->get(),
         ]);
     }
 
     public function update(Request $request, Event $event): RedirectResponse
     {
-        $validated = $request->validate([
+        // First, clean up the input data
+        $input = $request->all();
+
+        // Handle time fields - convert empty strings to null, trim seconds if present
+        if (isset($input['start_time'])) {
+            $input['start_time'] = trim($input['start_time']);
+            if ($input['start_time'] === '' || $input['start_time'] === null) {
+                $input['start_time'] = null;
+            } elseif (strlen($input['start_time']) === 8) {
+                // If format is HH:MM:SS, trim to HH:MM
+                $input['start_time'] = substr($input['start_time'], 0, 5);
+            }
+        }
+
+        if (isset($input['end_time'])) {
+            $input['end_time'] = trim($input['end_time']);
+            if ($input['end_time'] === '' || $input['end_time'] === null) {
+                $input['end_time'] = null;
+            } elseif (strlen($input['end_time']) === 8) {
+                // If format is HH:MM:SS, trim to HH:MM
+                $input['end_time'] = substr($input['end_time'], 0, 5);
+            }
+        }
+
+        $validated = validator($input, [
             'event_space_id' => ['required', 'exists:event_spaces,id'],
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
@@ -101,7 +140,7 @@ class EventController extends Controller
             'end_time' => ['nullable', 'date_format:H:i'],
             'status' => ['required', 'in:pending,confirmed,completed,cancelled'],
             'notes' => ['nullable', 'string'],
-        ]);
+        ])->validate();
 
         $event->update($validated);
 
