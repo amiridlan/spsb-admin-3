@@ -90,6 +90,7 @@ class EventController extends Controller
     {
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
         // Load relationships including staff
         $event->load(['eventSpace', 'staff.user']);
 
@@ -121,8 +122,10 @@ class EventController extends Controller
         $staffAvailability = app(\App\Services\StaffAvailabilityService::class)
             ->getStaffAvailabilityForEvent($event);
 
+=======
+>>>>>>> parent of a1cae99 (fixed calendar edit error)
         return Inertia::render('admin/events/Edit', [
-            'event' => $eventData,
+            'event' => $event->load('eventSpace'),
             'spaces' => EventSpace::where('is_active', true)->get(),
             'assignedStaff' => $event->staff,
             'availableStaff' => $staffAvailability,
@@ -141,6 +144,7 @@ class EventController extends Controller
 
     public function update(Request $request, Event $event): RedirectResponse
     {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
         $input = $request->all();
@@ -191,6 +195,9 @@ class EventController extends Controller
         }
 
         $validated = validator($input, [
+=======
+        $validated = $request->validate([
+>>>>>>> parent of a1cae99 (fixed calendar edit error)
             'event_space_id' => ['required', 'exists:event_spaces,id'],
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
@@ -203,7 +210,7 @@ class EventController extends Controller
             'end_time' => ['nullable', 'date_format:H:i'],
             'status' => ['required', 'in:pending,confirmed,completed,cancelled'],
             'notes' => ['nullable', 'string'],
-        ])->validate();
+        ]);
 
         $event->update($validated);
 
