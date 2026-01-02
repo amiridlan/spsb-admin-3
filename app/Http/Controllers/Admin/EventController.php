@@ -70,15 +70,7 @@ class EventController extends Controller
         $event->load([
             'eventSpace',
             'creator',
-<<<<<<< HEAD
-<<<<<<< HEAD
-            'staff.user'
-=======
             'staff.user' // Load staff with user relationship
->>>>>>> parent of bcd2403 (push for reference cc)
-=======
-            'staff.user' // Load staff with user relationship
->>>>>>> parent of bcd2403 (push for reference cc)
         ]);
 
         return Inertia::render('admin/events/Show', [
@@ -88,116 +80,15 @@ class EventController extends Controller
 
     public function edit(Event $event): Response
     {
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-        // Load relationships including staff
-        $event->load(['eventSpace', 'staff.user']);
-
-        $eventData = $event->toArray();
-=======
-        // Format the event data to ensure proper date/time format
-        $eventData = $event->load('eventSpace')->toArray();
->>>>>>> parent of bcd2403 (push for reference cc)
-=======
-        // Format the event data to ensure proper date/time format
-        $eventData = $event->load('eventSpace')->toArray();
->>>>>>> parent of bcd2403 (push for reference cc)
-
-        // Ensure dates are in YYYY-MM-DD format
-        $eventData['start_date'] = $event->start_date->format('Y-m-d');
-        $eventData['end_date'] = $event->end_date->format('Y-m-d');
-
-        // Ensure times are in HH:mm format or null
-        $eventData['start_time'] = $event->start_time ?
-            (strlen($event->start_time) === 8 ? substr($event->start_time, 0, 5) : $event->start_time) :
-            null;
-        $eventData['end_time'] = $event->end_time ?
-            (strlen($event->end_time) === 8 ? substr($event->end_time, 0, 5) : $event->end_time) :
-            null;
-
-<<<<<<< HEAD
-<<<<<<< HEAD
-        // Get staff availability
-        $staffAvailability = app(\App\Services\StaffAvailabilityService::class)
-            ->getStaffAvailabilityForEvent($event);
-
-=======
->>>>>>> parent of a1cae99 (fixed calendar edit error)
         return Inertia::render('admin/events/Edit', [
             'event' => $event->load('eventSpace'),
             'spaces' => EventSpace::where('is_active', true)->get(),
-            'assignedStaff' => $event->staff,
-            'availableStaff' => $staffAvailability,
-=======
-        return Inertia::render('admin/events/Edit', [
-            'event' => $eventData,
-            'spaces' => EventSpace::where('is_active', true)->get(),
->>>>>>> parent of bcd2403 (push for reference cc)
-=======
-        return Inertia::render('admin/events/Edit', [
-            'event' => $eventData,
-            'spaces' => EventSpace::where('is_active', true)->get(),
->>>>>>> parent of bcd2403 (push for reference cc)
         ]);
     }
 
     public function update(Request $request, Event $event): RedirectResponse
     {
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-        $input = $request->all();
-
-=======
-=======
->>>>>>> parent of bcd2403 (push for reference cc)
-        // First, clean up the input data
-        $input = $request->all();
-
-        // Handle time fields - convert empty strings to null, trim seconds if present
-<<<<<<< HEAD
->>>>>>> parent of bcd2403 (push for reference cc)
-=======
->>>>>>> parent of bcd2403 (push for reference cc)
-        if (isset($input['start_time'])) {
-            $input['start_time'] = trim($input['start_time']);
-            if ($input['start_time'] === '' || $input['start_time'] === null) {
-                $input['start_time'] = null;
-            } elseif (strlen($input['start_time']) === 8) {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-                // If format is HH:MM:SS, trim to HH:MM
->>>>>>> parent of bcd2403 (push for reference cc)
-=======
-                // If format is HH:MM:SS, trim to HH:MM
->>>>>>> parent of bcd2403 (push for reference cc)
-                $input['start_time'] = substr($input['start_time'], 0, 5);
-            }
-        }
-
-        if (isset($input['end_time'])) {
-            $input['end_time'] = trim($input['end_time']);
-            if ($input['end_time'] === '' || $input['end_time'] === null) {
-                $input['end_time'] = null;
-            } elseif (strlen($input['end_time']) === 8) {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-                // If format is HH:MM:SS, trim to HH:MM
->>>>>>> parent of bcd2403 (push for reference cc)
-=======
-                // If format is HH:MM:SS, trim to HH:MM
->>>>>>> parent of bcd2403 (push for reference cc)
-                $input['end_time'] = substr($input['end_time'], 0, 5);
-            }
-        }
-
-        $validated = validator($input, [
-=======
         $validated = $request->validate([
->>>>>>> parent of a1cae99 (fixed calendar edit error)
             'event_space_id' => ['required', 'exists:event_spaces,id'],
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
