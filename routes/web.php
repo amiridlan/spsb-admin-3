@@ -21,9 +21,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Calendar route - accessible to all authenticated users
-    Route::get('/calendar', [CalendarController::class, 'index'])
-        ->name('calendar.index')
-        ->middleware(['auth', 'verified']);
+    Route::get('/calendar', [CalendarController::class, 'index'])->name('calendar');
 
     // Admin routes
     Route::middleware(['role:superadmin,admin'])->prefix('admin')->name('admin.')->group(function () {

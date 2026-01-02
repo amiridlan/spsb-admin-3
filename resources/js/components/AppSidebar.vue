@@ -50,6 +50,16 @@ const mainNavItems = computed<NavItem[]>(() => {
                 icon: Building2,
             },
             {
+                title: 'Staff',
+                href: '/admin/staff',
+                icon: UserCog,
+            },
+            {
+                title: 'Users',
+                href: '/admin/users',
+                icon: Users,
+            },
+            {
                 title: 'Metrics',
                 href: '/admin/metrics',
                 icon: ChartColumnIncreasingIcon,
@@ -58,31 +68,13 @@ const mainNavItems = computed<NavItem[]>(() => {
                 title: 'Reports',
                 href: '/admin/reports',
                 icon: BookOpen,
-            },
-            {
-
-                title: 'Staff',
-                href: '/admin/staff',
-                icon: UserCog,
-            },
-            {
-
-                title: 'Users',
-                href: '/admin/users',
-                icon: Users,
             }
         );
     }
 
-     // Staff menu items (no need admin, and superadmin)
-    if (user && ['staff'].includes(user.role)) {
+     // Staff menu items (for staff, admin, and superadmin)
+    if (user && ['staff', 'admin', 'superadmin'].includes(user.role)) {
         items.push({
-
-            title: 'Calendar',
-            href: '/calendar',
-            icon: Calendar1Icon,
-        },
-        {
             title: 'My Assignments',
             href: '/staff/assignments',
             icon: BriefcaseBusinessIcon,

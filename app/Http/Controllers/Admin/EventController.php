@@ -70,7 +70,11 @@ class EventController extends Controller
         $event->load([
             'eventSpace',
             'creator',
+<<<<<<< HEAD
             'staff.user'
+=======
+            'staff.user' // Load staff with user relationship
+>>>>>>> parent of bcd2403 (push for reference cc)
         ]);
 
         return Inertia::render('admin/events/Show', [
@@ -80,10 +84,15 @@ class EventController extends Controller
 
     public function edit(Event $event): Response
     {
+<<<<<<< HEAD
         // Load relationships including staff
         $event->load(['eventSpace', 'staff.user']);
 
         $eventData = $event->toArray();
+=======
+        // Format the event data to ensure proper date/time format
+        $eventData = $event->load('eventSpace')->toArray();
+>>>>>>> parent of bcd2403 (push for reference cc)
 
         // Ensure dates are in YYYY-MM-DD format
         $eventData['start_date'] = $event->start_date->format('Y-m-d');
@@ -97,6 +106,7 @@ class EventController extends Controller
             (strlen($event->end_time) === 8 ? substr($event->end_time, 0, 5) : $event->end_time) :
             null;
 
+<<<<<<< HEAD
         // Get staff availability
         $staffAvailability = app(\App\Services\StaffAvailabilityService::class)
             ->getStaffAvailabilityForEvent($event);
@@ -106,18 +116,34 @@ class EventController extends Controller
             'spaces' => EventSpace::where('is_active', true)->get(),
             'assignedStaff' => $event->staff,
             'availableStaff' => $staffAvailability,
+=======
+        return Inertia::render('admin/events/Edit', [
+            'event' => $eventData,
+            'spaces' => EventSpace::where('is_active', true)->get(),
+>>>>>>> parent of bcd2403 (push for reference cc)
         ]);
     }
 
     public function update(Request $request, Event $event): RedirectResponse
     {
+<<<<<<< HEAD
         $input = $request->all();
 
+=======
+        // First, clean up the input data
+        $input = $request->all();
+
+        // Handle time fields - convert empty strings to null, trim seconds if present
+>>>>>>> parent of bcd2403 (push for reference cc)
         if (isset($input['start_time'])) {
             $input['start_time'] = trim($input['start_time']);
             if ($input['start_time'] === '' || $input['start_time'] === null) {
                 $input['start_time'] = null;
             } elseif (strlen($input['start_time']) === 8) {
+<<<<<<< HEAD
+=======
+                // If format is HH:MM:SS, trim to HH:MM
+>>>>>>> parent of bcd2403 (push for reference cc)
                 $input['start_time'] = substr($input['start_time'], 0, 5);
             }
         }
@@ -127,6 +153,10 @@ class EventController extends Controller
             if ($input['end_time'] === '' || $input['end_time'] === null) {
                 $input['end_time'] = null;
             } elseif (strlen($input['end_time']) === 8) {
+<<<<<<< HEAD
+=======
+                // If format is HH:MM:SS, trim to HH:MM
+>>>>>>> parent of bcd2403 (push for reference cc)
                 $input['end_time'] = substr($input['end_time'], 0, 5);
             }
         }

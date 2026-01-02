@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\EventResource;
 use App\Models\Event;
+use App\Models\EventSpace;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class EventController extends Controller
 {
@@ -16,7 +18,7 @@ class EventController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Event::query()
-            ->with(['eventSpace', 'staff.user'])
+            ->with('eventSpace')
             ->where('status', '!=', 'cancelled');
 
         if ($request->space_id) {
@@ -38,7 +40,7 @@ class EventController extends Controller
             return $this->error('Event not available', 404);
         }
 
-        return $this->success(new EventResource($event->load(['eventSpace', 'staff.user'])));
+        return $this->success(new EventResource($event->load('eventSpace')));
     }
 
     public function checkAvailability(Request $request): JsonResponse
@@ -84,6 +86,7 @@ class EventController extends Controller
             'end_time' => ['nullable', 'date_format:H:i'],
         ]);
 
+        // Check availability
         $conflicts = Event::where('event_space_id', $validated['event_space_id'])
             ->where('status', '!=', 'cancelled')
             ->where(function ($query) use ($validated) {
@@ -101,12 +104,12 @@ class EventController extends Controller
         }
 
         $validated['status'] = 'pending';
-        $validated['created_by'] = auth()->id() ?? 1;
+        $validated['created_by'] = auth()->id() ?? 1; // Fallback for API users
 
         $event = Event::create($validated);
 
         return $this->success(
-            new EventResource($event->load(['eventSpace', 'staff.user'])),
+            new EventResource($event->load('eventSpace')),
             'Booking request created successfully',
             201
         );

@@ -51,7 +51,6 @@ interface CalendarEvent {
 interface Props {
     events: CalendarEvent[];
     spaces: EventSpace[];
-    canEdit: boolean; // NEW: explicit permission flag
     filters?: {
         space?: number;
         status?: string;
@@ -72,9 +71,7 @@ const showCancelled = ref<boolean>(props.filters?.show_cancelled ?? false);
 const filterPopoverOpen = ref(false);
 
 const user = computed(() => page.props.auth.user as any);
-
-// Use the canEdit prop instead of deriving from role
-const canEdit = computed(() => props.canEdit);
+const canEdit = computed(() => ['superadmin', 'admin'].includes(user.value?.role));
 
 const breadcrumbs = [
     { title: 'Dashboard', href: '/dashboard' },
@@ -206,11 +203,9 @@ function updateEventDates(eventId: string, startDate: string, endDate: string, i
 function handleEventClick(info: EventClickArg) {
     const eventId = info.event.id;
 
-    // Redirect based on role/permissions
     if (canEdit.value) {
         router.visit(`/admin/events/${eventId}`);
     } else {
-        // Staff view - show read-only details or assignment page
         router.visit(`/staff/assignments/${eventId}`);
     }
 }
@@ -324,7 +319,7 @@ const viewOptions = [
                 <div>
                     <h1 class="text-2xl font-semibold">Event Calendar</h1>
                     <p class="text-sm text-muted-foreground">
-                        {{ canEdit ? 'View, create, and manage events' : 'View all events and your assignments' }}
+                        {{ canEdit ? 'View, create, and manage events' : 'View your assigned events' }}
                     </p>
                     <div class="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                         <span>{{ eventStats.total }} event{{ eventStats.total !== 1 ? 's' : '' }}</span>
@@ -531,22 +526,6 @@ const viewOptions = [
                             <li>Drag event edges to extend or shorten duration</li>
                             <li>Click and drag on calendar to select date range for new event</li>
                             <li>Click existing event to view/edit details</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Staff View Instructions -->
-            <div v-else class="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950">
-                <div class="flex items-start gap-3">
-                    <Info class="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-900 dark:text-blue-100" />
-                    <div class="text-sm text-blue-900 dark:text-blue-100">
-                        <p class="font-medium">Calendar View (Read-Only):</p>
-                        <ul class="mt-2 space-y-1 list-disc list-inside">
-                            <li>View all scheduled events across all spaces</li>
-                            <li>Click any event to view details</li>
-                            <li>Use filters to find specific events</li>
-                            <li>Check your assignments in the "My Assignments" section</li>
                         </ul>
                     </div>
                 </div>

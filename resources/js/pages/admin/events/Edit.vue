@@ -13,6 +13,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+<<<<<<< HEAD
 import {
     Table,
     TableBody,
@@ -33,12 +34,18 @@ import {
 import { useForm, Head, router } from '@inertiajs/vue3';
 import { ArrowLeft, UserPlus, Trash2 } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
+=======
+import { useForm, Head } from '@inertiajs/vue3';
+import { ArrowLeft } from 'lucide-vue-next';
+import { watch } from 'vue';
+>>>>>>> parent of bcd2403 (push for reference cc)
 
 interface EventSpace {
     id: number;
     name: string;
 }
 
+<<<<<<< HEAD
 interface User {
     id: number;
     name: string;
@@ -66,6 +73,10 @@ interface StaffAvailability {
 
 interface Event {
     id: number;
+=======
+interface Event {
+    id: number;
+>>>>>>> parent of bcd2403 (push for reference cc)
     event_space_id: number;
     title: string;
     description: string | null;
@@ -84,12 +95,20 @@ interface Event {
 interface Props {
     event: Event;
     spaces: EventSpace[];
+<<<<<<< HEAD
     assignedStaff?: AssignedStaff[];
     availableStaff?: StaffAvailability[];
+=======
+>>>>>>> parent of bcd2403 (push for reference cc)
 }
 
 const props = defineProps<Props>();
 
+<<<<<<< HEAD
+=======
+console.log('Event data:', props.event);
+
+>>>>>>> parent of bcd2403 (push for reference cc)
 // Initialize form with properly formatted data
 const form = useForm({
     event_space_id: props.event.event_space_id,
@@ -106,6 +125,7 @@ const form = useForm({
     notes: props.event.notes || '',
 });
 
+<<<<<<< HEAD
 const isAssignDialogOpen = ref(false);
 
 const assignForm = useForm({
@@ -144,6 +164,27 @@ const breadcrumbs = computed(() => [
     { title: 'Events', href: '/admin/events' },
     { title: 'Edit', href: `/admin/events/${props.event.id}/edit` },
 ]);
+=======
+// Debug: Watch form values
+watch(() => form.start_date, (val) => {
+    console.log('start_date changed:', val);
+});
+
+watch(() => form.end_date, (val) => {
+    console.log('end_date changed:', val);
+});
+
+const submitForm = () => {
+    console.log('Submitting form with data:', form.data());
+    form.put(`/admin/events/${props.event.id}`);
+};
+
+const breadcrumbs = [
+    { title: 'Dashboard', href: '/dashboard' },
+    { title: 'Events', href: '/admin/events' },
+    { title: 'Edit', href: `/admin/events/${props.event.id}/edit` },
+];
+>>>>>>> parent of bcd2403 (push for reference cc)
 </script>
 
 <template>
@@ -163,8 +204,12 @@ const breadcrumbs = computed(() => [
                 </div>
             </div>
 
+<<<<<<< HEAD
             <div class="max-w-4xl space-y-6">
                 <!-- Event Details Form -->
+=======
+            <div class="max-w-2xl">
+>>>>>>> parent of bcd2403 (push for reference cc)
                 <form @submit.prevent="submitForm" class="space-y-6">
                     <div class="space-y-4 rounded-lg border p-6">
                         <h3 class="font-medium">Event Details</h3>
@@ -260,6 +305,7 @@ const breadcrumbs = computed(() => [
                                     required
                                 />
                                 <InputError :message="form.errors.start_date" />
+                                <p class="text-xs text-muted-foreground">Current: {{ form.start_date }}</p>
                             </div>
 
                             <div class="grid gap-2">
@@ -271,6 +317,7 @@ const breadcrumbs = computed(() => [
                                     required
                                 />
                                 <InputError :message="form.errors.end_date" />
+                                <p class="text-xs text-muted-foreground">Current: {{ form.end_date }}</p>
                             </div>
                         </div>
 
@@ -283,6 +330,7 @@ const breadcrumbs = computed(() => [
                                     type="time"
                                 />
                                 <InputError :message="form.errors.start_time" />
+                                <p class="text-xs text-muted-foreground">Current: {{ form.start_time || 'None' }}</p>
                             </div>
 
                             <div class="grid gap-2">
@@ -293,6 +341,7 @@ const breadcrumbs = computed(() => [
                                     type="time"
                                 />
                                 <InputError :message="form.errors.end_time" />
+                                <p class="text-xs text-muted-foreground">Current: {{ form.end_time || 'None' }}</p>
                             </div>
                         </div>
 
