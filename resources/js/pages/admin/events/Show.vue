@@ -3,7 +3,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Head, Link } from '@inertiajs/vue3';
-import { ArrowLeft, Pencil, Calendar, Clock, User, Mail, Phone, Building2 } from 'lucide-vue-next';
+import { ArrowLeft, Pencil, Calendar, Clock, User, Mail, Phone, Building2, Users } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 interface EventSpace {
@@ -15,6 +15,18 @@ interface Creator {
     id: number;
     name: string;
     email: string;
+}
+
+interface StaffUser {
+    id: number;
+    name: string;
+    email: string;
+}
+
+interface Staff {
+    id: number;
+    user: StaffUser;
+    position: string | null;
 }
 
 interface Event {
@@ -32,6 +44,7 @@ interface Event {
     notes: string | null;
     event_space: EventSpace;
     creator: Creator;
+    staff: Staff[];
     created_at: string;
 }
 
@@ -121,16 +134,21 @@ const breadcrumbs = computed(() => [
                             <div>
                                 <p class="text-sm font-medium">Time</p>
                                 <p class="text-sm text-muted-foreground">
-                                    {{ event.start_time || 'N/A' }} - {{ event.end_time || 'N/A' }}
+                                    <span v-if="event.start_time">{{ event.start_time }}</span>
+                                    <span v-if="event.start_time && event.end_time"> - </span>
+                                    <span v-if="event.end_time">{{ event.end_time }}</span>
                                 </p>
                             </div>
                         </div>
 
-                        <div v-if="event.description">
-                            <p class="text-sm font-medium">Description</p>
-                            <p class="mt-1 text-sm text-muted-foreground">
-                                {{ event.description }}
-                            </p>
+                        <div v-if="event.description" class="flex items-start gap-3">
+                            <div class="mt-0.5 h-4 w-4"></div>
+                            <div>
+                                <p class="text-sm font-medium">Description</p>
+                                <p class="text-sm text-muted-foreground whitespace-pre-wrap">
+                                    {{ event.description }}
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -153,8 +171,8 @@ const breadcrumbs = computed(() => [
                             <Mail class="mt-0.5 h-4 w-4 text-muted-foreground" />
                             <div>
                                 <p class="text-sm font-medium">Email</p>
-
-                                   <a :href="`mailto:${event.client_email}`"
+                                <a
+                                    :href="`mailto:${event.client_email}`"
                                     class="text-sm text-primary hover:underline"
                                 >
                                     {{ event.client_email }}
@@ -166,8 +184,8 @@ const breadcrumbs = computed(() => [
                             <Phone class="mt-0.5 h-4 w-4 text-muted-foreground" />
                             <div>
                                 <p class="text-sm font-medium">Phone</p>
-
-                                  <a  :href="`tel:${event.client_phone}`"
+                                <a
+                                    :href="`tel:${event.client_phone}`"
                                     class="text-sm text-primary hover:underline"
                                 >
                                     {{ event.client_phone }}
@@ -176,35 +194,71 @@ const breadcrumbs = computed(() => [
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div v-if="event.notes" class="space-y-4 rounded-lg border p-6 md:col-span-2">
-                    <h3 class="font-medium">Internal Notes</h3>
-                    <p class="text-sm text-muted-foreground whitespace-pre-wrap">
-                        {{ event.notes }}
-                    </p>
+            <!-- NEW: Assigned Staff Section -->
+            <div class="space-y-4 rounded-lg border p-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <Users class="h-5 w-5 text-muted-foreground" />
+                        <h3 class="font-medium">Assigned Staff</h3>
+                        <Badge variant="secondary">{{ event.staff.length }}</Badge>
+                    </div>
+                    <Button variant="outline" size="sm" as-child>
+                        <Link :href="`/admin/events/${event.id}/staff`">
+                            Manage Staff
+                        </Link>
+                    </Button>
                 </div>
 
-                <div class="space-y-4 rounded-lg border p-6 md:col-span-2">
-                    <h3 class="font-medium">Metadata</h3>
-                    <div class="grid gap-3 md:grid-cols-2">
-                        <div>
-                            <p class="text-sm font-medium">Created By</p>
-                            <p class="text-sm text-muted-foreground">
-                                {{ event.creator.name }} ({{ event.creator.email }})
-                            </p>
+                <div v-if="event.staff.length > 0" class="space-y-2">
+                    <div
+                        v-for="staffMember in event.staff"
+                        :key="staffMember.id"
+                        class="flex items-center justify-between rounded-lg border p-3"
+                    >
+                        <div class="flex items-center gap-3">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                                <User class="h-5 w-5 text-primary" />
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium">{{ staffMember.user.name }}</p>
+                                <p v-if="staffMember.position" class="text-xs text-muted-foreground">
+                                    {{ staffMember.position }}
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <p class="text-sm font-medium">Created At</p>
-                            <p class="text-sm text-muted-foreground">
-                                {{ new Date(event.created_at).toLocaleString() }}
-                            </p>
-                        </div>
+                        <Button variant="ghost" size="sm" as-child>
+                            <Link :href="`/admin/staff/${staffMember.id}`">
+                                View Profile
+                            </Link>
+                        </Button>
                     </div>
                 </div>
+                <div v-else class="text-center py-8">
+                    <Users class="mx-auto h-12 w-12 text-muted-foreground/50" />
+                    <p class="mt-2 text-sm text-muted-foreground">No staff assigned to this event</p>
+                    <Button variant="outline" size="sm" class="mt-4" as-child>
+                        <Link :href="`/admin/events/${event.id}/staff`">
+                            Assign Staff
+                        </Link>
+                    </Button>
+                </div>
             </div>
-        </div>
-        <div v-else class="flex items-center justify-center p-6">
-            <p class="text-muted-foreground">Loading event details...</p>
+
+            <div v-if="event.notes" class="space-y-4 rounded-lg border p-6">
+                <h3 class="font-medium">Internal Notes</h3>
+                <p class="text-sm text-muted-foreground whitespace-pre-wrap">
+                    {{ event.notes }}
+                </p>
+            </div>
+
+            <div class="rounded-lg border p-6">
+                <div class="flex items-center justify-between text-sm text-muted-foreground">
+                    <span>Created by {{ event.creator.name }}</span>
+                    <span>{{ new Date(event.created_at).toLocaleString() }}</span>
+                </div>
+            </div>
         </div>
     </AppLayout>
 </template>

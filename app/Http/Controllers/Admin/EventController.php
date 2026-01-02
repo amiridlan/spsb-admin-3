@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\EventSpace;
+use App\Models\Staff;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -15,7 +16,7 @@ class EventController extends Controller
     public function index(Request $request): Response
     {
         $query = Event::query()
-            ->with(['eventSpace', 'creator'])
+            ->with(['eventSpace', 'creator', 'staff.user'])
             ->when($request->status, fn($q) => $q->where('status', $request->status))
             ->when($request->space, fn($q) => $q->where('event_space_id', $request->space))
             ->orderBy('start_date', 'desc');
@@ -33,6 +34,7 @@ class EventController extends Controller
     {
         return Inertia::render('admin/events/Create', [
             'spaces' => EventSpace::where('is_active', true)->get(),
+            'staff' => Staff::with('user')->where('is_available', true)->get(),
             'prefill' => [
                 'start_date' => $request->start_date,
                 'end_date' => $request->end_date,
@@ -55,11 +57,22 @@ class EventController extends Controller
             'end_time' => ['nullable', 'date_format:H:i'],
             'status' => ['required', 'in:pending,confirmed,completed,cancelled'],
             'notes' => ['nullable', 'string'],
+            'staff_ids' => ['nullable', 'array'],
+            'staff_ids.*' => ['exists:staff,id'],
         ]);
 
         $validated['created_by'] = auth()->id();
 
+        // Extract staff_ids before creating event
+        $staffIds = $validated['staff_ids'] ?? [];
+        unset($validated['staff_ids']);
+
         $event = Event::create($validated);
+
+        // Assign staff if provided
+        if (!empty($staffIds)) {
+            $event->staff()->attach($staffIds);
+        }
 
         return redirect()->route('admin.events.show', $event)
             ->with('success', 'Event created successfully.');
@@ -67,11 +80,7 @@ class EventController extends Controller
 
     public function show(Event $event): Response
     {
-        $event->load([
-            'eventSpace',
-            'creator',
-            'staff.user' // Load staff with user relationship
-        ]);
+        $event->load(['eventSpace', 'creator', 'staff.user']);
 
         return Inertia::render('admin/events/Show', [
             'event' => $event,
@@ -80,9 +89,12 @@ class EventController extends Controller
 
     public function edit(Event $event): Response
     {
+        $event->load(['eventSpace', 'staff']);
+
         return Inertia::render('admin/events/Edit', [
-            'event' => $event->load('eventSpace'),
+            'event' => $event,
             'spaces' => EventSpace::where('is_active', true)->get(),
+            'staff' => Staff::with('user')->where('is_available', true)->get(),
         ]);
     }
 
@@ -101,9 +113,18 @@ class EventController extends Controller
             'end_time' => ['nullable', 'date_format:H:i'],
             'status' => ['required', 'in:pending,confirmed,completed,cancelled'],
             'notes' => ['nullable', 'string'],
+            'staff_ids' => ['nullable', 'array'],
+            'staff_ids.*' => ['exists:staff,id'],
         ]);
 
+        // Extract staff_ids before updating event
+        $staffIds = $validated['staff_ids'] ?? [];
+        unset($validated['staff_ids']);
+
         $event->update($validated);
+
+        // Sync staff assignments
+        $event->staff()->sync($staffIds);
 
         return redirect()->route('admin.events.show', $event)
             ->with('success', 'Event updated successfully.');

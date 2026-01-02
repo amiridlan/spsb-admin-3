@@ -24,12 +24,22 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { MoreVertical, Plus, Eye, Pencil, Trash2 } from 'lucide-vue-next';
+import { MoreVertical, Plus, Eye, Pencil, Trash2, Users } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
 
 interface EventSpace {
     id: number;
     name: string;
+}
+
+interface User {
+    id: number;
+    name: string;
+}
+
+interface Staff {
+    id: number;
+    user: User;
 }
 
 interface Event {
@@ -40,6 +50,7 @@ interface Event {
     end_date: string;
     status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
     event_space: EventSpace;
+    staff: Staff[];
 }
 
 interface Props {
@@ -97,6 +108,13 @@ const deleteEvent = (eventId: number) => {
     if (confirm('Are you sure you want to delete this event?')) {
         router.delete(`/admin/events/${eventId}`);
     }
+};
+
+const getStaffNames = (staff: Staff[]): string => {
+    if (!staff || staff.length === 0) return 'No staff assigned';
+    if (staff.length === 1) return staff[0].user.name;
+    if (staff.length === 2) return `${staff[0].user.name}, ${staff[1].user.name}`;
+    return `${staff[0].user.name} +${staff.length - 1} more`;
 };
 
 const breadcrumbs = [
@@ -164,6 +182,7 @@ const breadcrumbs = [
                             <TableHead>Client</TableHead>
                             <TableHead>Space</TableHead>
                             <TableHead>Dates</TableHead>
+                            <TableHead>Staff</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead class="w-[70px]"></TableHead>
                         </TableRow>
@@ -179,6 +198,14 @@ const breadcrumbs = [
                                 {{ new Date(event.start_date).toLocaleDateString() }}
                                 -
                                 {{ new Date(event.end_date).toLocaleDateString() }}
+                            </TableCell>
+                            <TableCell>
+                                <div class="flex items-center gap-1 text-sm">
+                                    <Users class="h-3 w-3 text-muted-foreground" />
+                                    <span class="text-muted-foreground">
+                                        {{ getStaffNames(event.staff) }}
+                                    </span>
+                                </div>
                             </TableCell>
                             <TableCell>
                                 <Badge :variant="getStatusVariant(event.status)">
