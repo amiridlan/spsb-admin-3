@@ -12,6 +12,7 @@ class EventSpaceResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'location' => $this->location,
             'description' => $this->description,
             'capacity' => $this->capacity,
             'is_active' => $this->is_active,
