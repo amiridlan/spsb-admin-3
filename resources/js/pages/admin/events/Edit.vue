@@ -14,6 +14,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 <<<<<<< HEAD
+<<<<<<< HEAD
 import {
     Table,
     TableBody,
@@ -39,12 +40,18 @@ import { useForm, Head } from '@inertiajs/vue3';
 import { ArrowLeft } from 'lucide-vue-next';
 import { watch } from 'vue';
 >>>>>>> parent of bcd2403 (push for reference cc)
+=======
+import { useForm, Head } from '@inertiajs/vue3';
+import { ArrowLeft } from 'lucide-vue-next';
+import { watch } from 'vue';
+>>>>>>> parent of bcd2403 (push for reference cc)
 
 interface EventSpace {
     id: number;
     name: string;
 }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 interface User {
     id: number;
@@ -77,6 +84,10 @@ interface Event {
 interface Event {
     id: number;
 >>>>>>> parent of bcd2403 (push for reference cc)
+=======
+interface Event {
+    id: number;
+>>>>>>> parent of bcd2403 (push for reference cc)
     event_space_id: number;
     title: string;
     description: string | null;
@@ -96,8 +107,11 @@ interface Props {
     event: Event;
     spaces: EventSpace[];
 <<<<<<< HEAD
+<<<<<<< HEAD
     assignedStaff?: AssignedStaff[];
     availableStaff?: StaffAvailability[];
+=======
+>>>>>>> parent of bcd2403 (push for reference cc)
 =======
 >>>>>>> parent of bcd2403 (push for reference cc)
 }
@@ -105,6 +119,11 @@ interface Props {
 const props = defineProps<Props>();
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+console.log('Event data:', props.event);
+
+>>>>>>> parent of bcd2403 (push for reference cc)
 =======
 console.log('Event data:', props.event);
 
@@ -125,6 +144,7 @@ const form = useForm({
     notes: props.event.notes || '',
 });
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 const isAssignDialogOpen = ref(false);
 
@@ -165,6 +185,8 @@ const breadcrumbs = computed(() => [
     { title: 'Edit', href: `/admin/events/${props.event.id}/edit` },
 ]);
 =======
+=======
+>>>>>>> parent of bcd2403 (push for reference cc)
 // Debug: Watch form values
 watch(() => form.start_date, (val) => {
     console.log('start_date changed:', val);
@@ -184,6 +206,9 @@ const breadcrumbs = [
     { title: 'Events', href: '/admin/events' },
     { title: 'Edit', href: `/admin/events/${props.event.id}/edit` },
 ];
+<<<<<<< HEAD
+>>>>>>> parent of bcd2403 (push for reference cc)
+=======
 >>>>>>> parent of bcd2403 (push for reference cc)
 </script>
 
@@ -209,6 +234,9 @@ const breadcrumbs = [
                 <!-- Event Details Form -->
 =======
             <div class="max-w-2xl">
+<<<<<<< HEAD
+>>>>>>> parent of bcd2403 (push for reference cc)
+=======
 >>>>>>> parent of bcd2403 (push for reference cc)
                 <form @submit.prevent="submitForm" class="space-y-6">
                     <div class="space-y-4 rounded-lg border p-6">
