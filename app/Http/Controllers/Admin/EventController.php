@@ -1,46 +1,77 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\EventResource;
 use App\Models\Event;
 use App\Models\EventSpace;
-use Illuminate\Http\RedirectResponse;
+use App\Traits\ApiResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\Support\Facades\DB;
 
 class EventController extends Controller
 {
-    public function index(Request $request): Response
+    use ApiResponse;
+
+    public function index(Request $request): JsonResponse
     {
         $query = Event::query()
-            ->with(['eventSpace', 'creator'])
-            ->when($request->status, fn($q) => $q->where('status', $request->status))
-            ->when($request->space, fn($q) => $q->where('event_space_id', $request->space))
-            ->orderBy('start_date', 'desc');
+            ->with(['eventSpace', 'staff.user'])
+            ->where('status', '!=', 'cancelled');
 
-        $events = $query->paginate(20);
+        if ($request->space_id) {
+            $query->where('event_space_id', $request->space_id);
+        }
 
-        return Inertia::render('admin/events/Index', [
-            'events' => $events,
-            'filters' => $request->only(['status', 'space']),
-            'spaces' => EventSpace::where('is_active', true)->get(),
-        ]);
+        if ($request->start_date && $request->end_date) {
+            $query->whereBetween('start_date', [$request->start_date, $request->end_date]);
+        }
+
+        $events = $query->orderBy('start_date')->get();
+
+        return $this->success(EventResource::collection($events));
     }
 
-    public function create(Request $request): Response
+    public function show(Event $event): JsonResponse
     {
-        return Inertia::render('admin/events/Create', [
-            'spaces' => EventSpace::where('is_active', true)->get(),
-            'prefill' => [
-                'start_date' => $request->start_date,
-                'end_date' => $request->end_date,
-            ],
+        if ($event->isCancelled()) {
+            return $this->error('Event not available', 404);
+        }
+
+        return $this->success(new EventResource($event->load(['eventSpace', 'staff.user'])));
+    }
+
+    public function checkAvailability(Request $request): JsonResponse
+    {
+        $request->validate([
+            'event_space_id' => ['required', 'exists:event_spaces,id'],
+            'start_date' => ['required', 'date'],
+            'end_date' => ['required', 'date', 'after_or_equal:start_date'],
+        ]);
+
+        $conflicts = Event::where('event_space_id', $request->event_space_id)
+            ->where('status', '!=', 'cancelled')
+            ->where(function ($query) use ($request) {
+                $query->whereBetween('start_date', [$request->start_date, $request->end_date])
+                    ->orWhereBetween('end_date', [$request->start_date, $request->end_date])
+                    ->orWhere(function ($q) use ($request) {
+                        $q->where('start_date', '<=', $request->start_date)
+                            ->where('end_date', '>=', $request->end_date);
+                    });
+            })
+            ->exists();
+
+        return $this->success([
+            'available' => !$conflicts,
+            'message' => $conflicts
+                ? 'Space is not available for the selected dates'
+                : 'Space is available',
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'event_space_id' => ['required', 'exists:event_spaces,id'],
@@ -49,110 +80,38 @@ class EventController extends Controller
             'client_name' => ['required', 'string', 'max:255'],
             'client_email' => ['required', 'email', 'max:255'],
             'client_phone' => ['nullable', 'string', 'max:50'],
-            'start_date' => ['required', 'date'],
+            'start_date' => ['required', 'date', 'after_or_equal:today'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
             'start_time' => ['nullable', 'date_format:H:i'],
             'end_time' => ['nullable', 'date_format:H:i'],
-            'status' => ['required', 'in:pending,confirmed,completed,cancelled'],
-            'notes' => ['nullable', 'string'],
         ]);
 
-        $validated['created_by'] = auth()->id();
+        // Check availability
+        $conflicts = Event::where('event_space_id', $validated['event_space_id'])
+            ->where('status', '!=', 'cancelled')
+            ->where(function ($query) use ($validated) {
+                $query->whereBetween('start_date', [$validated['start_date'], $validated['end_date']])
+                    ->orWhereBetween('end_date', [$validated['start_date'], $validated['end_date']])
+                    ->orWhere(function ($q) use ($validated) {
+                        $q->where('start_date', '<=', $validated['start_date'])
+                            ->where('end_date', '>=', $validated['end_date']);
+                    });
+            })
+            ->exists();
+
+        if ($conflicts) {
+            return $this->error('Space is not available for the selected dates', 422);
+        }
+
+        $validated['status'] = 'pending';
+        $validated['created_by'] = auth()->id() ?? 1; // Fallback for API users
 
         $event = Event::create($validated);
 
-        return redirect()->route('admin.events.show', $event)
-            ->with('success', 'Event created successfully.');
-    }
-
-    public function show(Event $event): Response
-    {
-        $event->load([
-            'eventSpace',
-            'creator',
-            'staff.user' // Load staff with user relationship
-        ]);
-
-        return Inertia::render('admin/events/Show', [
-            'event' => $event,
-        ]);
-    }
-
-    public function edit(Event $event): Response
-    {
-        // Format the event data to ensure proper date/time format
-        $eventData = $event->load('eventSpace')->toArray();
-
-        // Ensure dates are in YYYY-MM-DD format
-        $eventData['start_date'] = $event->start_date->format('Y-m-d');
-        $eventData['end_date'] = $event->end_date->format('Y-m-d');
-
-        // Ensure times are in HH:mm format or null
-        $eventData['start_time'] = $event->start_time ?
-            (strlen($event->start_time) === 8 ? substr($event->start_time, 0, 5) : $event->start_time) :
-            null;
-        $eventData['end_time'] = $event->end_time ?
-            (strlen($event->end_time) === 8 ? substr($event->end_time, 0, 5) : $event->end_time) :
-            null;
-
-        return Inertia::render('admin/events/Edit', [
-            'event' => $eventData,
-            'spaces' => EventSpace::where('is_active', true)->get(),
-        ]);
-    }
-
-    public function update(Request $request, Event $event): RedirectResponse
-    {
-        // First, clean up the input data
-        $input = $request->all();
-
-        // Handle time fields - convert empty strings to null, trim seconds if present
-        if (isset($input['start_time'])) {
-            $input['start_time'] = trim($input['start_time']);
-            if ($input['start_time'] === '' || $input['start_time'] === null) {
-                $input['start_time'] = null;
-            } elseif (strlen($input['start_time']) === 8) {
-                // If format is HH:MM:SS, trim to HH:MM
-                $input['start_time'] = substr($input['start_time'], 0, 5);
-            }
-        }
-
-        if (isset($input['end_time'])) {
-            $input['end_time'] = trim($input['end_time']);
-            if ($input['end_time'] === '' || $input['end_time'] === null) {
-                $input['end_time'] = null;
-            } elseif (strlen($input['end_time']) === 8) {
-                // If format is HH:MM:SS, trim to HH:MM
-                $input['end_time'] = substr($input['end_time'], 0, 5);
-            }
-        }
-
-        $validated = validator($input, [
-            'event_space_id' => ['required', 'exists:event_spaces,id'],
-            'title' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'client_name' => ['required', 'string', 'max:255'],
-            'client_email' => ['required', 'email', 'max:255'],
-            'client_phone' => ['nullable', 'string', 'max:50'],
-            'start_date' => ['required', 'date'],
-            'end_date' => ['required', 'date', 'after_or_equal:start_date'],
-            'start_time' => ['nullable', 'date_format:H:i'],
-            'end_time' => ['nullable', 'date_format:H:i'],
-            'status' => ['required', 'in:pending,confirmed,completed,cancelled'],
-            'notes' => ['nullable', 'string'],
-        ])->validate();
-
-        $event->update($validated);
-
-        return redirect()->route('admin.events.show', $event)
-            ->with('success', 'Event updated successfully.');
-    }
-
-    public function destroy(Event $event): RedirectResponse
-    {
-        $event->delete();
-
-        return redirect()->route('admin.events.index')
-            ->with('success', 'Event deleted successfully.');
+        return $this->success(
+            new EventResource($event->load(['eventSpace', 'staff.user'])),
+            'Booking request created successfully',
+            201
+        );
     }
 }

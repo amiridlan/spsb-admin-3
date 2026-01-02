@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Select,
     SelectContent,
@@ -12,80 +13,88 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { useForm, Head } from '@inertiajs/vue3';
-import { ArrowLeft } from 'lucide-vue-next';
-import { watch } from 'vue';
+import { Badge } from '@/components/ui/badge';
+import { Head, useForm } from '@inertiajs/vue3';
+import { ArrowLeft, X } from 'lucide-vue-next';
+import { ref } from 'vue';
 
 interface EventSpace {
     id: number;
     name: string;
 }
 
-interface Event {
+interface StaffMember {
     id: number;
-    event_space_id: number;
-    title: string;
-    description: string | null;
-    client_name: string;
-    client_email: string;
-    client_phone: string | null;
-    start_date: string;
-    end_date: string;
-    start_time: string | null;
-    end_time: string | null;
-    status: string;
-    notes: string | null;
-    event_space: EventSpace;
+    user: {
+        id: number;
+        name: string;
+        email: string;
+    };
+    position: string | null;
+    is_available: boolean;
 }
 
 interface Props {
-    event: Event;
     spaces: EventSpace[];
+    staff: StaffMember[];
 }
 
 const props = defineProps<Props>();
 
-console.log('Event data:', props.event);
-
-// Initialize form with properly formatted data
-const form = useForm({
-    event_space_id: props.event.event_space_id,
-    title: props.event.title,
-    description: props.event.description || '',
-    client_name: props.event.client_name,
-    client_email: props.event.client_email,
-    client_phone: props.event.client_phone || '',
-    start_date: props.event.start_date,
-    end_date: props.event.end_date,
-    start_time: props.event.start_time || '',
-    end_time: props.event.end_time || '',
-    status: props.event.status,
-    notes: props.event.notes || '',
-});
-
-// Debug: Watch form values
-watch(() => form.start_date, (val) => {
-    console.log('start_date changed:', val);
-});
-
-watch(() => form.end_date, (val) => {
-    console.log('end_date changed:', val);
-});
-
-const submitForm = () => {
-    console.log('Submitting form with data:', form.data());
-    form.put(`/admin/events/${props.event.id}`);
-};
-
 const breadcrumbs = [
     { title: 'Dashboard', href: '/dashboard' },
     { title: 'Events', href: '/admin/events' },
-    { title: 'Edit', href: `/admin/events/${props.event.id}/edit` },
+    { title: 'Create', href: '/admin/events/create' },
 ];
+
+const form = useForm({
+    event_space_id: null as number | null,
+    title: '',
+    description: '',
+    client_name: '',
+    client_email: '',
+    client_phone: '',
+    start_date: '',
+    end_date: '',
+    start_time: '',
+    end_time: '',
+    status: 'pending',
+    notes: '',
+    staff_ids: [] as number[],
+});
+
+const selectedStaff = ref<number[]>([]);
+
+const toggleStaff = (staffId: number) => {
+    const index = selectedStaff.value.indexOf(staffId);
+    if (index > -1) {
+        selectedStaff.value.splice(index, 1);
+    } else {
+        selectedStaff.value.push(staffId);
+    }
+
+    // Create a new array to ensure reactivity
+    const newStaffIds = [...selectedStaff.value];
+    form.staff_ids = newStaffIds;
+
+    console.log('Toggled staff:', staffId);
+    console.log('Selected staff array:', selectedStaff.value);
+    console.log('Form staff_ids:', form.staff_ids);
+};
+
+const getStaffById = (staffId: number) => {
+    return props.staff.find(s => s.id === staffId);
+};
+
+const submit = () => {
+    form.post('/admin/events', {
+        preserveScroll: true,
+    });
+};
 </script>
 
 <template>
-    <Head :title="`Edit ${event.title}`" />
+    <Head title="Create Event" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex flex-col gap-6 p-6">
@@ -94,15 +103,15 @@ const breadcrumbs = [
                     <ArrowLeft class="h-4 w-4" />
                 </Button>
                 <div>
-                    <h1 class="text-2xl font-semibold">Edit Event</h1>
+                    <h1 class="text-2xl font-semibold">Create Event</h1>
                     <p class="text-sm text-muted-foreground">
-                        Update event information
+                        Add a new event booking
                     </p>
                 </div>
             </div>
 
             <div class="max-w-2xl">
-                <form @submit.prevent="submitForm" class="space-y-6">
+                <form @submit.prevent="submit" class="space-y-6">
                     <div class="space-y-4 rounded-lg border p-6">
                         <h3 class="font-medium">Event Details</h3>
 
@@ -114,15 +123,16 @@ const breadcrumbs = [
                                 type="text"
                                 required
                                 autofocus
+                                placeholder="Birthday Party"
                             />
                             <InputError :message="form.errors.title" />
                         </div>
 
                         <div class="grid gap-2">
                             <Label for="event_space_id">Event Space *</Label>
-                            <Select v-model="form.event_space_id">
+                            <Select v-model="form.event_space_id" required>
                                 <SelectTrigger>
-                                    <SelectValue />
+                                    <SelectValue placeholder="Select space" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem
@@ -143,6 +153,7 @@ const breadcrumbs = [
                                 id="description"
                                 v-model="form.description"
                                 rows="3"
+                                placeholder="Event details..."
                             />
                             <InputError :message="form.errors.description" />
                         </div>
@@ -158,6 +169,7 @@ const breadcrumbs = [
                                 v-model="form.client_name"
                                 type="text"
                                 required
+                                placeholder="John Doe"
                             />
                             <InputError :message="form.errors.client_name" />
                         </div>
@@ -169,6 +181,7 @@ const breadcrumbs = [
                                 v-model="form.client_email"
                                 type="email"
                                 required
+                                placeholder="john@example.com"
                             />
                             <InputError :message="form.errors.client_email" />
                         </div>
@@ -179,6 +192,7 @@ const breadcrumbs = [
                                 id="client_phone"
                                 v-model="form.client_phone"
                                 type="tel"
+                                placeholder="+1234567890"
                             />
                             <InputError :message="form.errors.client_phone" />
                         </div>
@@ -197,7 +211,6 @@ const breadcrumbs = [
                                     required
                                 />
                                 <InputError :message="form.errors.start_date" />
-                                <p class="text-xs text-muted-foreground">Current: {{ form.start_date }}</p>
                             </div>
 
                             <div class="grid gap-2">
@@ -209,7 +222,6 @@ const breadcrumbs = [
                                     required
                                 />
                                 <InputError :message="form.errors.end_date" />
-                                <p class="text-xs text-muted-foreground">Current: {{ form.end_date }}</p>
                             </div>
                         </div>
 
@@ -222,7 +234,6 @@ const breadcrumbs = [
                                     type="time"
                                 />
                                 <InputError :message="form.errors.start_time" />
-                                <p class="text-xs text-muted-foreground">Current: {{ form.start_time || 'None' }}</p>
                             </div>
 
                             <div class="grid gap-2">
@@ -233,13 +244,12 @@ const breadcrumbs = [
                                     type="time"
                                 />
                                 <InputError :message="form.errors.end_time" />
-                                <p class="text-xs text-muted-foreground">Current: {{ form.end_time || 'None' }}</p>
                             </div>
                         </div>
 
                         <div class="grid gap-2">
                             <Label for="status">Status *</Label>
-                            <Select v-model="form.status">
+                            <Select v-model="form.status" required>
                                 <SelectTrigger>
                                     <SelectValue />
                                 </SelectTrigger>
@@ -259,14 +269,68 @@ const breadcrumbs = [
                                 id="notes"
                                 v-model="form.notes"
                                 rows="3"
+                                placeholder="Internal notes..."
                             />
                             <InputError :message="form.errors.notes" />
                         </div>
                     </div>
 
+                    <div class="space-y-4 rounded-lg border p-6">
+                        <h3 class="font-medium">Assign Staff (Optional)</h3>
+                        <p class="text-sm text-muted-foreground">
+                            Select staff members to assign to this event. You can also assign staff later.
+                        </p>
+
+                        <div class="space-y-2">
+                            <div
+                                v-for="member in staff.filter(s => s.is_available)"
+                                :key="member.id"
+                                class="flex items-center space-x-3 rounded-lg border p-3 hover:bg-accent/50 cursor-pointer"
+                                @click="toggleStaff(member.id)"
+                            >
+                                <Checkbox
+                                    :id="`staff-${member.id}`"
+                                    :checked="selectedStaff.includes(member.id)"
+                                    @click.stop
+                                />
+                                <div class="flex-1">
+                                    <p class="font-medium">{{ member.user.name }}</p>
+                                    <p class="text-sm text-muted-foreground">
+                                        {{ member.position || 'Staff Member' }} • {{ member.user.email }}
+                                    </p>
+                                </div>
+                                <Badge v-if="selectedStaff.includes(member.id)" variant="default">
+                                    ✓ Selected
+                                </Badge>
+                            </div>
+
+                            <div v-if="staff.filter(s => s.is_available).length === 0" class="text-center py-4">
+                                <p class="text-sm text-muted-foreground">No available staff members</p>
+                            </div>
+                        </div>
+
+                        <div v-if="selectedStaff.length > 0" class="pt-2">
+                            <p class="text-sm font-medium mb-2">Selected Staff ({{ selectedStaff.length }}):</p>
+                            <div class="flex flex-wrap gap-2">
+                                <Badge
+                                    v-for="staffId in selectedStaff"
+                                    :key="staffId"
+                                    variant="secondary"
+                                    class="cursor-pointer"
+                                    @click="toggleStaff(staffId)"
+                                >
+                                    {{ getStaffById(staffId)?.user.name }}
+                                    <X class="ml-1 h-3 w-3" />
+                                </Badge>
+                            </div>
+                        </div>
+
+                        <InputError :message="form.errors.staff_ids" />
+                    </div>
+
                     <div class="flex gap-3">
                         <Button type="submit" :disabled="form.processing">
-                            Update Event
+                            Create Event
                         </Button>
                         <Button
                             type="button"

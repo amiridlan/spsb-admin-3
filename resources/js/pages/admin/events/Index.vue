@@ -23,13 +23,26 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { MoreVertical, Plus, Eye, Pencil, Trash2 } from 'lucide-vue-next';
+import { MoreVertical, Plus, Eye, Pencil, Trash2, Users } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
 
 interface EventSpace {
     id: number;
     name: string;
+}
+
+interface Staff {
+    id: number;
+    user: {
+        name: string;
+    };
 }
 
 interface Event {
@@ -40,6 +53,7 @@ interface Event {
     end_date: string;
     status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
     event_space: EventSpace;
+    staff: Staff[];
 }
 
 interface Props {
@@ -59,7 +73,6 @@ interface Props {
 
 const props = defineProps<Props>();
 
-// Use a special string constant for "all" filters
 const ALL_STATUS = '__all_status__';
 const ALL_SPACE = '__all_space__';
 
@@ -69,7 +82,6 @@ const spaceFilter = ref(props.filters.space?.toString() || ALL_SPACE);
 watch([statusFilter, spaceFilter], ([status, space]) => {
     const params: Record<string, string> = {};
 
-    // Only add to params if it's not the "all" option
     if (status && status !== ALL_STATUS) {
         params.status = status;
     }
@@ -164,6 +176,7 @@ const breadcrumbs = [
                             <TableHead>Client</TableHead>
                             <TableHead>Space</TableHead>
                             <TableHead>Dates</TableHead>
+                            <TableHead>Staff</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead class="w-[70px]"></TableHead>
                         </TableRow>
@@ -176,9 +189,42 @@ const breadcrumbs = [
                             <TableCell>{{ event.client_name }}</TableCell>
                             <TableCell>{{ event.event_space.name }}</TableCell>
                             <TableCell>
-                                {{ new Date(event.start_date).toLocaleDateString() }}
-                                -
-                                {{ new Date(event.end_date).toLocaleDateString() }}
+                                <div class="text-sm">
+                                    {{ new Date(event.start_date).toLocaleDateString() }}
+                                    -
+                                    {{ new Date(event.end_date).toLocaleDateString() }}
+                                </div>
+                            </TableCell>
+                            <TableCell>
+                                <!-- Single staff member - show name -->
+                                <span v-if="event.staff && event.staff.length === 1" class="text-sm">
+                                    {{ event.staff[0].user.name }}
+                                </span>
+                                <!-- Multiple staff - show count with tooltip -->
+                                <TooltipProvider v-else-if="event.staff && event.staff.length > 1">
+                                    <Tooltip>
+                                        <TooltipTrigger as-child>
+                                            <Badge variant="outline" class="cursor-help">
+                                                <Users class="mr-1 h-3 w-3" />
+                                                {{ event.staff.length }}
+                                            </Badge>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <div class="space-y-1">
+                                                <p class="font-medium text-xs">Assigned Staff:</p>
+                                                <ul class="text-xs space-y-0.5">
+                                                    <li v-for="member in event.staff" :key="member.id">
+                                                        • {{ member.user.name }}
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                                <!-- No staff -->
+                                <span v-else class="text-sm text-muted-foreground">
+                                    None
+                                </span>
                             </TableCell>
                             <TableCell>
                                 <Badge :variant="getStatusVariant(event.status)">

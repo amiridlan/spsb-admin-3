@@ -3,7 +3,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Head, Link } from '@inertiajs/vue3';
-import { ArrowLeft, Pencil, Calendar, Clock, User, Mail, Phone, Building2 } from 'lucide-vue-next';
+import { ArrowLeft, Pencil, Calendar, Clock, User, Mail, Phone, Building2, Users } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 interface EventSpace {
@@ -15,6 +15,18 @@ interface Creator {
     id: number;
     name: string;
     email: string;
+}
+
+interface StaffUser {
+    id: number;
+    name: string;
+    email: string;
+}
+
+interface StaffMember {
+    id: number;
+    user: StaffUser;
+    position: string | null;
 }
 
 interface Event {
@@ -32,6 +44,7 @@ interface Event {
     notes: string | null;
     event_space: EventSpace;
     creator: Creator;
+    staff: StaffMember[];
     created_at: string;
 }
 
@@ -51,7 +64,6 @@ const getStatusVariant = (status: string) => {
     return variants[status] || 'outline';
 };
 
-// Make breadcrumbs computed to ensure event is available
 const breadcrumbs = computed(() => [
     { title: 'Dashboard', href: '/dashboard' },
     { title: 'Events', href: '/admin/events' },
@@ -153,8 +165,7 @@ const breadcrumbs = computed(() => [
                             <Mail class="mt-0.5 h-4 w-4 text-muted-foreground" />
                             <div>
                                 <p class="text-sm font-medium">Email</p>
-
-                                   <a :href="`mailto:${event.client_email}`"
+                                <a :href="`mailto:${event.client_email}`"
                                     class="text-sm text-primary hover:underline"
                                 >
                                     {{ event.client_email }}
@@ -166,14 +177,48 @@ const breadcrumbs = computed(() => [
                             <Phone class="mt-0.5 h-4 w-4 text-muted-foreground" />
                             <div>
                                 <p class="text-sm font-medium">Phone</p>
-
-                                  <a  :href="`tel:${event.client_phone}`"
+                                <a :href="`tel:${event.client_phone}`"
                                     class="text-sm text-primary hover:underline"
                                 >
                                     {{ event.client_phone }}
                                 </a>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Assigned Staff Section -->
+                <div class="space-y-4 rounded-lg border p-6 md:col-span-2">
+                    <div class="flex items-center gap-2">
+                        <Users class="h-5 w-5" />
+                        <h3 class="font-medium">Assigned Staff</h3>
+                    </div>
+
+                    <div v-if="event.staff && event.staff.length > 0" class="grid gap-3 md:grid-cols-2">
+                        <div
+                            v-for="member in event.staff"
+                            :key="member.id"
+                            class="flex items-center gap-3 rounded-lg border p-3"
+                        >
+                            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                                <User class="h-5 w-5 text-primary" />
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-medium">{{ member.user.name }}</p>
+                                <p class="text-sm text-muted-foreground">
+                                    {{ member.position || 'Staff Member' }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-else class="text-center py-8">
+                        <Users class="mx-auto h-12 w-12 text-muted-foreground/50" />
+                        <p class="mt-2 text-sm text-muted-foreground">No staff assigned to this event</p>
+                        <Button variant="outline" size="sm" class="mt-3" as-child>
+                            <Link :href="`/admin/events/${event.id}/edit`">
+                                Assign Staff
+                            </Link>
+                        </Button>
                     </div>
                 </div>
 

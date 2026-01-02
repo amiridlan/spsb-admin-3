@@ -40,94 +40,70 @@ class CalendarController extends Controller
     /**
      * Display the calendar view with advanced filtering
      */
-    public function index(Request $request): Response
+    public function index(Request $request)
     {
         $user = $request->user();
 
-        // Build query based on user role
-        $query = Event::query()->with(['eventSpace', 'creator']);
+        // Staff can view calendar but with read-only access
+        $canEdit = in_array($user->role, ['superadmin', 'admin']);
 
-        // Staff users only see their assigned events
-        if ($user->isStaff() && !$user->canManageUsers()) {
-            if (!$user->hasStaffProfile()) {
-                abort(403, 'You do not have a staff profile.');
-            }
+        // Get filters
+        $spaceId = $request->input('space');
+        $status = $request->input('status');
+        $view = $request->input('view', 'dayGridMonth');
+        $showCancelled = $request->boolean('show_cancelled', false);
 
-            $query->whereHas('staff', function ($q) use ($user) {
-                $q->where('staff.id', $user->staffProfile->id);
-            });
+        // Base query - all events visible to staff and admins
+        $query = Event::with('eventSpace');
+
+        // Apply filters
+        if ($spaceId) {
+            $query->where('event_space_id', $spaceId);
         }
 
-        // Apply space filter
-        if ($request->space) {
-            $query->where('event_space_id', $request->space);
+        if ($status) {
+            $query->where('status', $status);
         }
 
-        // Apply status filter
-        if ($request->status) {
-            $query->where('status', $request->status);
-        } else {
-            // By default, exclude cancelled events unless explicitly requested
-            if (!$request->show_cancelled) {
-                $query->where('status', '!=', 'cancelled');
-            }
+        if (!$showCancelled) {
+            $query->where('status', '!=', 'cancelled');
         }
 
-        // Apply show_cancelled filter
-        if ($request->show_cancelled && !$request->status) {
-            // Include all statuses including cancelled
-            // No additional filtering needed
-        }
-
-        // Get events
-        $events = $query->orderBy('start_date')->get();
+        $events = $query->get();
 
         // Format events for FullCalendar
-        $calendarEvents = $events->map(function ($event) {
-            $statusColors = $this->getStatusColors($event->status);
-
-            $startDate = $event->start_date;
-            $endDate = $event->end_date;
-
-            // FullCalendar uses exclusive end dates for all-day events
-            $exclusiveEndDate = $endDate->copy()->addDay();
+        $formattedEvents = $events->map(function ($event) {
+            $colors = $this->getStatusColors($event->status);
 
             return [
                 'id' => $event->id,
                 'title' => $event->title,
-                'start' => $startDate->format('Y-m-d'),
-                'end' => $exclusiveEndDate->format('Y-m-d'),
-                'allDay' => true,
-                'backgroundColor' => $statusColors['background'],
-                'borderColor' => $statusColors['border'],
-                'textColor' => $statusColors['text'],
+                'start' => $event->start_date,
+                'end' => Carbon::parse($event->end_date)->addDay()->toDateString(),
+                'backgroundColor' => $colors['background'],
+                'borderColor' => $colors['border'],
                 'extendedProps' => [
                     'status' => $event->status,
                     'space' => $event->eventSpace->name,
-                    'space_id' => $event->eventSpace->id,
+                    'space_id' => $event->event_space_id,
                     'client' => $event->client_name,
                     'description' => $event->description,
-                    'start_date' => $startDate->format('Y-m-d'),
-                    'end_date' => $endDate->format('Y-m-d'),
-                    'duration_days' => $this->calculateDuration($startDate, $endDate),
                 ],
             ];
         });
 
-        // Get all active event spaces for filter
-        $spaces = EventSpace::where('is_active', true)
-            ->orderBy('name')
-            ->get();
+        $spaces = EventSpace::where('is_active', true)->get();
 
         return Inertia::render('Calendar', [
-            'events' => $calendarEvents,
+            'events' => $formattedEvents,
             'spaces' => $spaces,
             'filters' => [
-                'space' => $request->space ? (int) $request->space : null,
-                'status' => $request->status,
-                'view' => $request->view ?? 'dayGridMonth',
-                'show_cancelled' => $request->show_cancelled ? true : false,
+                'space' => $spaceId,
+                'status' => $status,
+                'view' => $view,
+                'show_cancelled' => $showCancelled,
             ],
+            'canEdit' => $canEdit, // Pass this to the frontend
         ]);
     }
 
