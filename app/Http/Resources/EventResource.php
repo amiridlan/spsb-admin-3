@@ -22,8 +22,7 @@ class EventResource extends JsonResource
             'end_time' => $this->end_time,
             'status' => $this->status,
             'event_space' => new EventSpaceResource($this->whenLoaded('eventSpace')),
-<<<<<<< HEAD
-<<<<<<< HEAD
+
             'staff' => $this->when($this->relationLoaded('staff'), function () {
                 return $this->staff->map(function ($staffMember) {
                     return [
@@ -34,10 +33,6 @@ class EventResource extends JsonResource
                 });
             }),
             'staff_count' => $this->when($this->relationLoaded('staff'), $this->staff->count()),
-=======
->>>>>>> parent of bcd2403 (push for reference cc)
-=======
->>>>>>> parent of bcd2403 (push for reference cc)
             'created_at' => $this->created_at->toISOString(),
         ];
     }

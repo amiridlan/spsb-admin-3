@@ -195,9 +195,14 @@ const breadcrumbs = [
                             <TableCell>{{ event.client_name }}</TableCell>
                             <TableCell>{{ event.event_space.name }}</TableCell>
                             <TableCell>
-                                {{ new Date(event.start_date).toLocaleDateString() }}
-                                -
-                                {{ new Date(event.end_date).toLocaleDateString() }}
+                                <template v-if="event.start_date === event.end_date">
+                                    {{ new Date(event.start_date).toLocaleDateString() }}
+                                </template>
+                                <template v-else>
+                                    {{ new Date(event.start_date).toLocaleDateString() }}
+                                    -
+                                    {{ new Date(event.end_date).toLocaleDateString() }}
+                                </template>
                             </TableCell>
                             <TableCell>
                                 <div class="flex items-center gap-1 text-sm">

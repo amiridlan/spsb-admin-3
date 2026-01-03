@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import InputError from '@/components/InputError.vue';
+import DatePicker from '@/components/DatePicker.vue';
+import TimePicker from '@/components/TimePicker.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
     Select,
     SelectContent,
@@ -15,6 +16,7 @@ import {
 } from '@/components/ui/select';
 import { Head, useForm } from '@inertiajs/vue3';
 import { ArrowLeft } from 'lucide-vue-next';
+import { cn } from '@/lib/utils';
 
 interface EventSpace {
     id: number;
@@ -53,8 +55,8 @@ const form = useForm({
     client_phone: '',
     start_date: props.prefill?.start_date || '',
     end_date: props.prefill?.end_date || '',
-    start_time: '',
-    end_time: '',
+    start_time: null as string | null, // null instead of empty string
+    end_time: null as string | null, // null instead of empty string
     status: 'pending',
     notes: '',
     staff_ids: [] as number[],
@@ -191,22 +193,18 @@ const breadcrumbs = [
                         <div class="grid grid-cols-2 gap-4">
                             <div class="grid gap-2">
                                 <Label for="start_date">Start Date *</Label>
-                                <Input
-                                    id="start_date"
+                                <DatePicker
                                     v-model="form.start_date"
-                                    type="date"
-                                    required
+                                    placeholder="Select start date"
                                 />
                                 <InputError :message="form.errors.start_date" />
                             </div>
 
                             <div class="grid gap-2">
                                 <Label for="end_date">End Date *</Label>
-                                <Input
-                                    id="end_date"
+                                <DatePicker
                                     v-model="form.end_date"
-                                    type="date"
-                                    required
+                                    placeholder="Select end date"
                                 />
                                 <InputError :message="form.errors.end_date" />
                             </div>
@@ -215,20 +213,18 @@ const breadcrumbs = [
                         <div class="grid grid-cols-2 gap-4">
                             <div class="grid gap-2">
                                 <Label for="start_time">Start Time</Label>
-                                <Input
-                                    id="start_time"
+                                <TimePicker
                                     v-model="form.start_time"
-                                    type="time"
+                                    placeholder="Select start time"
                                 />
                                 <InputError :message="form.errors.start_time" />
                             </div>
 
                             <div class="grid gap-2">
                                 <Label for="end_time">End Time</Label>
-                                <Input
-                                    id="end_time"
+                                <TimePicker
                                     v-model="form.end_time"
-                                    type="time"
+                                    placeholder="Select end time"
                                 />
                                 <InputError :message="form.errors.end_time" />
                             </div>
@@ -239,30 +235,53 @@ const breadcrumbs = [
                     <div class="space-y-4 rounded-lg border p-6">
                         <h3 class="font-medium">Staff Assignment</h3>
                         <p class="text-sm text-muted-foreground">
-                            Select staff members to assign to this event (optional)
+                            Click to select staff members to assign to this event (optional)
                         </p>
 
-                        <div v-if="staff.length > 0" class="space-y-2">
-                            <div
+                        <div v-if="staff.length > 0" class="grid gap-2">
+                            <button
                                 v-for="staffMember in staff"
                                 :key="staffMember.id"
-                                class="flex items-center space-x-2 rounded-lg border p-3 hover:bg-accent"
+                                type="button"
+                                @click="toggleStaff(staffMember.id)"
+                                :class="cn(
+                                    'flex items-center gap-3 rounded-lg border p-4 text-left transition-all',
+                                    form.staff_ids.includes(staffMember.id)
+                                        ? 'border-primary bg-primary/5 ring-2 ring-primary'
+                                        : 'border-border hover:border-primary/50 hover:bg-accent'
+                                )"
                             >
-                                <Checkbox
-                                    :id="`staff-${staffMember.id}`"
-                                    :checked="form.staff_ids.includes(staffMember.id)"
-                                    @update:checked="toggleStaff(staffMember.id)"
-                                />
-                                <label
-                                    :for="`staff-${staffMember.id}`"
-                                    class="flex-1 cursor-pointer text-sm"
+                                <div
+                                    :class="cn(
+                                        'flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors',
+                                        form.staff_ids.includes(staffMember.id)
+                                            ? 'border-primary bg-primary'
+                                            : 'border-muted-foreground'
+                                    )"
                                 >
+                                    <svg
+                                        v-if="form.staff_ids.includes(staffMember.id)"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="12"
+                                        height="12"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="3"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        class="text-primary-foreground"
+                                    >
+                                        <polyline points="20 6 9 17 4 12" />
+                                    </svg>
+                                </div>
+                                <div class="flex-1">
                                     <div class="font-medium">{{ staffMember.user.name }}</div>
                                     <div v-if="staffMember.position" class="text-xs text-muted-foreground">
                                         {{ staffMember.position }}
                                     </div>
-                                </label>
-                            </div>
+                                </div>
+                            </button>
                         </div>
                         <div v-else class="text-sm text-muted-foreground">
                             No available staff members

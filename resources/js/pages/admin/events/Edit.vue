@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import InputError from '@/components/InputError.vue';
+import DatePicker from '@/components/DatePicker.vue';
+import TimePicker from '@/components/TimePicker.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
     Select,
     SelectContent,
@@ -15,7 +16,7 @@ import {
 } from '@/components/ui/select';
 import { useForm, Head } from '@inertiajs/vue3';
 import { ArrowLeft } from 'lucide-vue-next';
-import { watch } from 'vue';
+import { cn } from '@/lib/utils';
 
 interface EventSpace {
     id: number;
@@ -66,37 +67,38 @@ interface Props {
 
 const props = defineProps<Props>();
 
-console.log('Event data:', props.event);
-
 // Initialize form with properly formatted data
 const form = useForm({
-    event_space_id: props.event.event_space_id,
+    event_space_id: String(props.event.event_space_id),
     title: props.event.title,
     description: props.event.description || '',
     client_name: props.event.client_name,
     client_email: props.event.client_email,
     client_phone: props.event.client_phone || '',
-    start_date: props.event.start_date,
-    end_date: props.event.end_date,
-    start_time: props.event.start_time || '',
-    end_time: props.event.end_time || '',
+    start_date: props.event.start_date, // Already in YYYY-MM-DD format from backend
+    end_date: props.event.end_date, // Already in YYYY-MM-DD format from backend
+    start_time: props.event.start_time || null, // null instead of empty string
+    end_time: props.event.end_time || null, // null instead of empty string
     status: props.event.status,
     notes: props.event.notes || '',
     staff_ids: props.event.staff.map(s => s.id),
 });
 
-// Debug: Watch form values
-watch(() => form.start_date, (val) => {
-    console.log('start_date changed:', val);
-});
-
-watch(() => form.end_date, (val) => {
-    console.log('end_date changed:', val);
-});
-
 const submitForm = () => {
-    console.log('Submitting form with data:', form.data());
-    form.put(`/admin/events/${props.event.id}`);
+    // Convert event_space_id back to number for backend
+    // Ensure null times are sent as null, not undefined or empty string
+    const formData = {
+        ...form.data(),
+        event_space_id: Number(form.event_space_id),
+        start_time: form.start_time || null,
+        end_time: form.end_time || null,
+    };
+
+    // DEBUG: Check staff_ids
+    console.log('📋 Staff IDs being sent:', formData.staff_ids);
+    console.log('📋 Full form data:', formData);
+
+    form.transform(() => formData).put(`/admin/events/${props.event.id}`);
 };
 
 const toggleStaff = (staffId: number) => {
@@ -153,13 +155,15 @@ const breadcrumbs = [
                             <Label for="event_space_id">Event Space *</Label>
                             <Select v-model="form.event_space_id">
                                 <SelectTrigger>
-                                    <SelectValue />
+                                    <SelectValue>
+                                        {{ spaces.find(s => s.id === Number(form.event_space_id))?.name || 'Select event space' }}
+                                    </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem
                                         v-for="space in spaces"
                                         :key="space.id"
-                                        :value="space.id"
+                                        :value="String(space.id)"
                                     >
                                         {{ space.name }}
                                     </SelectItem>
@@ -221,82 +225,95 @@ const breadcrumbs = [
                         <div class="grid grid-cols-2 gap-4">
                             <div class="grid gap-2">
                                 <Label for="start_date">Start Date *</Label>
-                                <Input
-                                    id="start_date"
+                                <DatePicker
                                     v-model="form.start_date"
-                                    type="date"
-                                    required
+                                    placeholder="Select start date"
                                 />
                                 <InputError :message="form.errors.start_date" />
-                                <p class="text-xs text-muted-foreground">Current: {{ form.start_date }}</p>
                             </div>
 
                             <div class="grid gap-2">
                                 <Label for="end_date">End Date *</Label>
-                                <Input
-                                    id="end_date"
+                                <DatePicker
                                     v-model="form.end_date"
-                                    type="date"
-                                    required
+                                    placeholder="Select end date"
                                 />
                                 <InputError :message="form.errors.end_date" />
-                                <p class="text-xs text-muted-foreground">Current: {{ form.end_date }}</p>
                             </div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
                             <div class="grid gap-2">
                                 <Label for="start_time">Start Time</Label>
-                                <Input
-                                    id="start_time"
+                                <TimePicker
                                     v-model="form.start_time"
-                                    type="time"
+                                    placeholder="Select start time"
                                 />
                                 <InputError :message="form.errors.start_time" />
-                                <p class="text-xs text-muted-foreground">Current: {{ form.start_time || 'None' }}</p>
                             </div>
 
                             <div class="grid gap-2">
                                 <Label for="end_time">End Time</Label>
-                                <Input
-                                    id="end_time"
+                                <TimePicker
                                     v-model="form.end_time"
-                                    type="time"
+                                    placeholder="Select end time"
                                 />
                                 <InputError :message="form.errors.end_time" />
-                                <p class="text-xs text-muted-foreground">Current: {{ form.end_time || 'None' }}</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- NEW: Staff Assignment Section -->
+                    <!-- Staff Assignment Section -->
                     <div class="space-y-4 rounded-lg border p-6">
                         <h3 class="font-medium">Staff Assignment</h3>
                         <p class="text-sm text-muted-foreground">
-                            Select staff members to assign to this event
+                            Click to select staff members to assign to this event
                         </p>
 
-                        <div v-if="staff.length > 0" class="space-y-2">
-                            <div
+                        <div v-if="staff.length > 0" class="grid gap-2">
+                            <button
                                 v-for="staffMember in staff"
                                 :key="staffMember.id"
-                                class="flex items-center space-x-2 rounded-lg border p-3 hover:bg-accent"
+                                type="button"
+                                @click="toggleStaff(staffMember.id)"
+                                :class="cn(
+                                    'flex items-center gap-3 rounded-lg border p-4 text-left transition-all',
+                                    form.staff_ids.includes(staffMember.id)
+                                        ? 'border-primary bg-primary/5 ring-2 ring-primary'
+                                        : 'border-border hover:border-primary/50 hover:bg-accent'
+                                )"
                             >
-                                <Checkbox
-                                    :id="`staff-${staffMember.id}`"
-                                    :checked="form.staff_ids.includes(staffMember.id)"
-                                    @update:checked="toggleStaff(staffMember.id)"
-                                />
-                                <label
-                                    :for="`staff-${staffMember.id}`"
-                                    class="flex-1 cursor-pointer text-sm"
+                                <div
+                                    :class="cn(
+                                        'flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors',
+                                        form.staff_ids.includes(staffMember.id)
+                                            ? 'border-primary bg-primary'
+                                            : 'border-muted-foreground'
+                                    )"
                                 >
+                                    <svg
+                                        v-if="form.staff_ids.includes(staffMember.id)"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="12"
+                                        height="12"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="3"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        class="text-primary-foreground"
+                                    >
+                                        <polyline points="20 6 9 17 4 12" />
+                                    </svg>
+                                </div>
+                                <div class="flex-1">
                                     <div class="font-medium">{{ staffMember.user.name }}</div>
                                     <div v-if="staffMember.position" class="text-xs text-muted-foreground">
                                         {{ staffMember.position }}
                                     </div>
-                                </label>
-                            </div>
+                                </div>
+                            </button>
                         </div>
                         <div v-else class="text-sm text-muted-foreground">
                             No available staff members
@@ -311,7 +328,9 @@ const breadcrumbs = [
                             <Label for="status">Status *</Label>
                             <Select v-model="form.status">
                                 <SelectTrigger>
-                                    <SelectValue />
+                                    <SelectValue>
+                                        {{ form.status.charAt(0).toUpperCase() + form.status.slice(1) }}
+                                    </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="pending">Pending</SelectItem>
