@@ -5,7 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Head, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, X } from 'lucide-vue-next';
@@ -41,7 +47,7 @@ const breadcrumbs = [
 const form = useForm({
     position: props.staff.position || '',
     specializations: props.staff.specializations || [],
-    is_available: props.staff.is_available,
+    is_available: props.staff.is_available ? 'true' : 'false', // Convert boolean to string
     notes: props.staff.notes || '',
 });
 
@@ -59,7 +65,13 @@ const removeSpecialization = (spec: string) => {
 };
 
 const submit = () => {
-    form.put(`/admin/staff/${props.staff.id}`, {
+    // Convert string to boolean before submitting
+    const formData = {
+        ...form.data(),
+        is_available: form.is_available === 'true', // Convert to boolean
+    };
+
+    form.transform(() => formData).put(`/admin/staff/${props.staff.id}`, {
         preserveScroll: true,
     });
 };
@@ -143,14 +155,18 @@ const submit = () => {
                             <InputError :message="form.errors.notes" />
                         </div>
 
-                        <div class="flex items-center space-x-2">
-                            <Checkbox
-                                id="is_available"
-                                v-model:checked="form.is_available"
-                            />
-                            <Label for="is_available" class="cursor-pointer">
-                                Available for assignments
-                            </Label>
+                        <div class="grid gap-2">
+                            <Label for="is_available">Availability Status</Label>
+                            <Select v-model="form.is_available">
+                                <SelectTrigger id="is_available">
+                                    <SelectValue placeholder="Select availability" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="true">Available</SelectItem>
+                                    <SelectItem value="false">Unavailable</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <InputError :message="form.errors.is_available" />
                         </div>
                     </div>
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
+use App\Models\Event;
 use App\Services\StaffAvailabilityService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -67,6 +68,9 @@ class AssignmentController extends Controller
             'past' => $staff->pastAssignments()->count(),
         ];
 
+        // Get ALL events for calendar (not just assigned ones)
+        $calendarEvents = $this->getCalendarEvents($staff->id);
+
         return Inertia::render('staff/assignments/Index', [
             'staff' => [
                 'id' => $staff->id,
@@ -81,9 +85,68 @@ class AssignmentController extends Controller
                 ],
             ],
             'assignments' => $assignments,
+            'calendarEvents' => $calendarEvents,
             'filter' => $filter,
             'counts' => $counts,
         ]);
+    }
+
+    /**
+     * Get all calendar events and mark which ones the staff is assigned to
+     */
+    protected function getCalendarEvents(int $staffId): array
+    {
+        $events = Event::with(['eventSpace'])
+            ->where('status', '!=', 'cancelled')
+            ->orderBy('start_date')
+            ->get();
+
+        // Get staff's assigned event IDs
+        $assignedEventIds = Event::whereHas('staff', function ($query) use ($staffId) {
+            $query->where('staff_id', $staffId);
+        })->pluck('id')->toArray();
+
+        return $events->map(function ($event) use ($assignedEventIds) {
+            $isAssigned = in_array($event->id, $assignedEventIds);
+
+            // Use green color for assigned events, otherwise use status colors
+            if ($isAssigned) {
+                $backgroundColor = '#10b981'; // green-500
+                $borderColor = '#059669'; // green-600
+            } else {
+                // Use status colors
+                $backgroundColor = match ($event->status) {
+                    'pending' => '#f59e0b', // amber-500
+                    'confirmed' => '#3b82f6', // blue-500
+                    'completed' => '#6b7280', // gray-500
+                    default => '#3b82f6',
+                };
+                $borderColor = match ($event->status) {
+                    'pending' => '#d97706', // amber-600
+                    'confirmed' => '#2563eb', // blue-600
+                    'completed' => '#4b5563', // gray-600
+                    default => '#2563eb',
+                };
+            }
+
+            return [
+                'id' => (string) $event->id,
+                'title' => $event->title,
+                'start' => $event->start_date->format('Y-m-d'),
+                'end' => $event->end_date->addDay()->format('Y-m-d'), // FullCalendar end is exclusive
+                'allDay' => true,
+                'backgroundColor' => $backgroundColor,
+                'borderColor' => $borderColor,
+                'textColor' => '#ffffff',
+                'extendedProps' => [
+                    'status' => $event->status,
+                    'space' => $event->eventSpace->name,
+                    'space_id' => $event->eventSpace->id,
+                    'client' => $event->client_name,
+                    'isAssigned' => $isAssigned,
+                ],
+            ];
+        })->toArray();
     }
 
     /**
@@ -99,86 +162,66 @@ class AssignmentController extends Controller
 
         $staff = $user->staffProfile;
 
-        // Get the event with assignment details
-        $assignment = $staff->events()
-            ->with(['eventSpace', 'creator', 'staff.user'])
+        // Get the event and verify staff is assigned
+        $event = Event::with(['eventSpace', 'creator', 'staff.user'])
             ->findOrFail($eventId);
 
-        // Get the pivot data for this staff member
-        $assignmentDetails = $assignment->staff()
-            ->where('staff_id', $staff->id)
-            ->first()
-            ->pivot;
+        // Check if staff is assigned to this event
+        $assignment = $event->staff()->where('staff_id', $staff->id)->first();
 
-        return Inertia::render('staff/assignments/Show', [
-            'assignment' => $assignment,
-            'assignmentDetails' => $assignmentDetails,
-            'staff' => $staff,
-        ]);
-    }
-
-    /**
-     * Display staff availability calendar
-     */
-    public function calendar(Request $request): Response
-    {
-        $user = $request->user();
-
-        if (!$user->hasStaffProfile()) {
-            abort(403, 'You do not have a staff profile.');
+        if (!$assignment) {
+            abort(403, 'You are not assigned to this event.');
         }
 
-        $staff = $user->staffProfile;
+        // Get assignment details
+        $assignmentDetails = [
+            'role' => $assignment->pivot->role,
+            'notes' => $assignment->pivot->notes,
+        ];
 
-        // Get date range (default to current month)
-        $startDate = $request->input('start', Carbon::now()->startOfMonth());
-        $endDate = $request->input('end', Carbon::now()->endOfMonth());
-
-        $startDate = Carbon::parse($startDate);
-        $endDate = Carbon::parse($endDate);
-
-        // Get assignments in date range
-        $assignments = $this->availabilityService->getAssignedEvents($staff, $startDate, $endDate);
-
-        // Format for calendar
-        $calendarEvents = $assignments->map(function ($event) use ($staff) {
-            $pivot = $event->staff->where('id', $staff->id)->first()->pivot;
-
-            return [
+        return Inertia::render('staff/assignments/Show', [
+            'staff' => [
+                'id' => $staff->id,
+                'position' => $staff->position,
+                'user' => [
+                    'id' => $staff->user->id,
+                    'name' => $staff->user->name,
+                    'email' => $staff->user->email,
+                ],
+            ],
+            'assignment' => [
                 'id' => $event->id,
                 'title' => $event->title,
-                'start' => $event->start_date->format('Y-m-d'),
-                'end' => $event->end_date->addDay()->format('Y-m-d'), // FullCalendar uses exclusive end dates
-                'backgroundColor' => $this->getStatusColor($event->status),
-                'borderColor' => $this->getStatusColor($event->status),
-                'extendedProps' => [
-                    'status' => $event->status,
-                    'space' => $event->eventSpace->name,
-                    'role' => $pivot->role,
-                    'client' => $event->client_name,
+                'description' => $event->description,
+                'client_name' => $event->client_name,
+                'client_email' => $event->client_email,
+                'client_phone' => $event->client_phone,
+                'start_date' => $event->start_date->format('Y-m-d'),
+                'end_date' => $event->end_date->format('Y-m-d'),
+                'start_time' => $event->start_time,
+                'end_time' => $event->end_time,
+                'status' => $event->status,
+                'notes' => $event->notes,
+                'event_space' => [
+                    'id' => $event->eventSpace->id,
+                    'name' => $event->eventSpace->name,
+                    'location' => $event->eventSpace->location,
                 ],
-            ];
-        });
-
-        return Inertia::render('staff/assignments/Calendar', [
-            'staff' => $staff->load('user'),
-            'events' => $calendarEvents,
-            'startDate' => $startDate->format('Y-m-d'),
-            'endDate' => $endDate->format('Y-m-d'),
+                'staff' => $event->staff->map(fn($s) => [
+                    'id' => $s->id,
+                    'user' => [
+                        'id' => $s->user->id,
+                        'name' => $s->user->name,
+                        'email' => $s->user->email,
+                    ],
+                    'position' => $s->position,
+                    'pivot' => [
+                        'role' => $s->pivot->role,
+                        'notes' => $s->pivot->notes,
+                    ],
+                ]),
+            ],
+            'assignmentDetails' => $assignmentDetails,
         ]);
-    }
-
-    /**
-     * Get color for event status
-     */
-    private function getStatusColor(string $status): string
-    {
-        return match ($status) {
-            'pending' => '#f59e0b',
-            'confirmed' => '#10b981',
-            'completed' => '#6b7280',
-            'cancelled' => '#ef4444',
-            default => '#3b82f6',
-        };
     }
 }

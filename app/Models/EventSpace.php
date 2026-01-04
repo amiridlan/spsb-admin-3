@@ -14,6 +14,7 @@ class EventSpace extends Model
         'location',
         'description',
         'capacity',
+        'image',
         'is_active',
     ];
 

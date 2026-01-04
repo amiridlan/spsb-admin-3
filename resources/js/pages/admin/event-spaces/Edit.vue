@@ -7,14 +7,16 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Head, useForm } from '@inertiajs/vue3';
-import { ArrowLeft } from 'lucide-vue-next';
+import { ArrowLeft, Upload, X } from 'lucide-vue-next';
+import { ref } from 'vue';
 
 interface EventSpace {
     id: number;
     name: string;
-    location: string; // Add location
+    location: string;
     description: string | null;
     capacity: number | null;
+    image: string | null;
     is_active: boolean;
 }
 
@@ -32,15 +34,61 @@ const breadcrumbs = [
 
 const form = useForm({
     name: props.space.name,
-    location: props.space.location, // Add location
+    location: props.space.location,
     description: props.space.description || '',
     capacity: props.space.capacity,
     is_active: props.space.is_active,
+    image: null as File | null,
 });
 
+const newImagePreview = ref<string | null>(null);
+const removeCurrentImage = ref(false);
+
+const handleImageUpload = (event: Event) => {
+    const target = event.target as HTMLInputElement;
+    if (target.files && target.files[0]) {
+        const file = target.files[0];
+        form.image = file;
+
+        // Create preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            newImagePreview.value = e.target?.result as string;
+        };
+        reader.readAsDataURL(file);
+
+        removeCurrentImage.value = false;
+    }
+};
+
+const removeNewImage = () => {
+    form.image = null;
+    newImagePreview.value = null;
+    // Reset file input
+    const input = document.getElementById('image') as HTMLInputElement;
+    if (input) input.value = '';
+};
+
+const removeExistingImage = () => {
+    removeCurrentImage.value = true;
+    form.image = null;
+    newImagePreview.value = null;
+};
+
 const submit = () => {
-    form.put(`/admin/event-spaces/${props.space.id}`, {
+    // Add flag to remove current image if requested
+    const formData = {
+        ...form.data(),
+        _remove_image: removeCurrentImage.value,
+    };
+
+    form.transform(() => formData).post(`/admin/event-spaces/${props.space.id}`, {
         preserveScroll: true,
+        forceFormData: true, // Force multipart/form-data for file upload
+        onSuccess: () => {
+            newImagePreview.value = null;
+            removeCurrentImage.value = false;
+        },
     });
 };
 </script>
@@ -64,7 +112,10 @@ const submit = () => {
 
             <div class="max-w-2xl">
                 <form @submit.prevent="submit" class="space-y-6">
+                    <!-- Basic Information -->
                     <div class="space-y-4 rounded-lg border p-6">
+                        <h3 class="font-medium">Basic Information</h3>
+
                         <div class="grid gap-2">
                             <Label for="name">Name *</Label>
                             <Input
@@ -96,6 +147,7 @@ const submit = () => {
                                 id="description"
                                 v-model="form.description"
                                 rows="4"
+                                placeholder="Describe the space, amenities, and features..."
                                 :aria-invalid="!!form.errors.description"
                             />
                             <InputError :message="form.errors.description" />
@@ -110,6 +162,9 @@ const submit = () => {
                                 min="1"
                                 :aria-invalid="!!form.errors.capacity"
                             />
+                            <p class="text-xs text-muted-foreground">
+                                Maximum number of people this space can accommodate
+                            </p>
                             <InputError :message="form.errors.capacity" />
                         </div>
 
@@ -124,9 +179,81 @@ const submit = () => {
                         </div>
                     </div>
 
+                    <!-- Image Management -->
+                    <div class="space-y-4 rounded-lg border p-6">
+                        <h3 class="font-medium">Event Space Image</h3>
+
+                        <!-- Current Image -->
+                        <div v-if="space.image && !removeCurrentImage && !newImagePreview" class="space-y-2">
+                            <Label>Current Image</Label>
+                            <div class="relative h-48 w-full overflow-hidden rounded-lg border">
+                                <img
+                                    :src="`/storage/${space.image}`"
+                                    :alt="space.name"
+                                    class="h-full w-full object-cover"
+                                />
+                            </div>
+                            <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                @click="removeExistingImage"
+                            >
+                                <X class="mr-2 h-4 w-4" />
+                                Remove Current Image
+                            </Button>
+                        </div>
+
+                        <!-- New Image Preview -->
+                        <div v-if="newImagePreview" class="space-y-2">
+                            <Label>New Image Preview</Label>
+                            <div class="relative h-48 w-full overflow-hidden rounded-lg border">
+                                <img
+                                    :src="newImagePreview"
+                                    alt="New preview"
+                                    class="h-full w-full object-cover"
+                                />
+                            </div>
+                            <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                @click="removeNewImage"
+                            >
+                                <X class="mr-2 h-4 w-4" />
+                                Cancel New Image
+                            </Button>
+                        </div>
+
+                        <!-- Upload New Image -->
+                        <div v-if="!newImagePreview" class="grid gap-2">
+                            <Label for="image">
+                                {{ space.image && !removeCurrentImage ? 'Change Image' : 'Upload Image' }}
+                            </Label>
+                            <div class="flex items-center gap-2">
+                                <Input
+                                    id="image"
+                                    type="file"
+                                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                                    @change="handleImageUpload"
+                                    :aria-invalid="!!form.errors.image"
+                                />
+                                <Upload class="h-4 w-4 text-muted-foreground" />
+                            </div>
+                            <p class="text-xs text-muted-foreground">
+                                {{ space.image && !removeCurrentImage
+                                    ? 'Upload a new image to replace the current one'
+                                    : 'Recommended: 1200x600px (2:1 ratio), Max 2MB. Formats: JPEG, PNG, WebP'
+                                }}
+                            </p>
+                            <InputError :message="form.errors.image" />
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
                     <div class="flex gap-3">
                         <Button type="submit" :disabled="form.processing">
-                            Update Space
+                            Update Event Space
                         </Button>
                         <Button
                             type="button"

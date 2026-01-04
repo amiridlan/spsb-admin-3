@@ -13,13 +13,13 @@ import {
 import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, Users, Building2, Calendar, UserCog, ChartColumnIncreasingIcon, Calendar1Icon, BriefcaseBusinessIcon } from 'lucide-vue-next';
+import { BookOpen, LayoutGrid, Users, Building2, Calendar, UserCog, ChartColumnIncreasingIcon, Calendar1Icon, BriefcaseBusinessIcon } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 
 const page = usePage();
 
-// Make mainNavItems a computed property so it's reactive
+// Main navigation items (Dashboard, Calendar, Metrics, Reports, My Assignments)
 const mainNavItems = computed<NavItem[]>(() => {
     const user = page.props.auth?.user;
 
@@ -31,33 +31,13 @@ const mainNavItems = computed<NavItem[]>(() => {
         },
     ];
 
-    // Add admin menu items if user has the right role
+    // Add Calendar, Metrics, and Reports for admin users
     if (user && (user.role === 'superadmin' || user.role === 'admin')) {
         items.push(
             {
-                title: 'Events',
-                href: '/admin/events',
-                icon: Calendar,
-            },
-            {
                 title: 'Calendar',
                 href: '/calendar',
-                icon: Calendar1Icon, // or Calendar icon
-            },
-            {
-                title: 'Event Spaces',
-                href: '/admin/event-spaces',
-                icon: Building2,
-            },
-            {
-                title: 'Staff',
-                href: '/admin/staff',
-                icon: UserCog,
-            },
-            {
-                title: 'Users',
-                href: '/admin/users',
-                icon: Users,
+                icon: Calendar1Icon,
             },
             {
                 title: 'Metrics',
@@ -72,13 +52,59 @@ const mainNavItems = computed<NavItem[]>(() => {
         );
     }
 
-     // Staff menu items (for staff, admin, and superadmin)
-    if (user && ['staff', 'admin', 'superadmin'].includes(user.role)) {
+     // Staff menu items (for staff)
+    if (user && ['staff'].includes(user.role)) {
         items.push({
             title: 'My Assignments',
             href: '/staff/assignments',
             icon: BriefcaseBusinessIcon,
         });
+    }
+
+    return items;
+});
+
+// Event Space Group items
+const eventSpaceItems = computed<NavItem[]>(() => {
+    const user = page.props.auth?.user;
+    const items: NavItem[] = [];
+
+    if (user && (user.role === 'superadmin' || user.role === 'admin')) {
+        items.push(
+            {
+                title: 'Events',
+                href: '/admin/events',
+                icon: Calendar,
+            },
+            {
+                title: 'Event Spaces',
+                href: '/admin/event-spaces',
+                icon: Building2,
+            }
+        );
+    }
+
+    return items;
+});
+
+// HRMS Group items
+const hrmsItems = computed<NavItem[]>(() => {
+    const user = page.props.auth?.user;
+    const items: NavItem[] = [];
+
+    if (user && (user.role === 'superadmin' || user.role === 'admin')) {
+        items.push(
+            {
+                title: 'Staff',
+                href: '/admin/staff',
+                icon: UserCog,
+            },
+            {
+                title: 'Users',
+                href: '/admin/users',
+                icon: Users,
+            }
+        );
     }
 
     return items;
@@ -100,7 +126,11 @@ const mainNavItems = computed<NavItem[]>(() => {
         </SidebarHeader>
 
         <SidebarContent>
-            <NavMain :items="mainNavItems" />
+            <NavMain
+                :main-items="mainNavItems"
+                :event-space-items="eventSpaceItems"
+                :hrms-items="hrmsItems"
+            />
         </SidebarContent>
 
         <SidebarFooter>

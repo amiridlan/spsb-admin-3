@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
     Select,
     SelectContent,
@@ -40,7 +39,7 @@ const form = useForm({
     user_id: null as number | null,
     position: '',
     specializations: [] as string[],
-    is_available: true,
+    is_available: 'true', // Store as string in form
     notes: '',
 });
 
@@ -58,7 +57,13 @@ const removeSpecialization = (spec: string) => {
 };
 
 const submit = () => {
-    form.post('/admin/staff', {
+    // Convert string to boolean before submitting
+    const formData = {
+        ...form.data(),
+        is_available: form.is_available === 'true', // Convert to boolean
+    };
+
+    form.transform(() => formData).post('/admin/staff', {
         preserveScroll: true,
         onSuccess: () => {
             form.reset();
@@ -79,7 +84,7 @@ const submit = () => {
                 <div>
                     <h1 class="text-2xl font-semibold">Add Staff Member</h1>
                     <p class="text-sm text-muted-foreground">
-                        Create a new staff profile
+                        Create a new staff profile for event assignments
                     </p>
                 </div>
             </div>
@@ -90,8 +95,8 @@ const submit = () => {
                         <div class="grid gap-2">
                             <Label for="user_id">User *</Label>
                             <Select v-model="form.user_id" required>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select user" />
+                                <SelectTrigger id="user_id">
+                                    <SelectValue placeholder="Select a user" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem
@@ -156,14 +161,18 @@ const submit = () => {
                             <InputError :message="form.errors.notes" />
                         </div>
 
-                        <div class="flex items-center space-x-2">
-                            <Checkbox
-                                id="is_available"
-                                v-model:checked="form.is_available"
-                            />
-                            <Label for="is_available" class="cursor-pointer">
-                                Available for assignments
-                            </Label>
+                        <div class="grid gap-2">
+                            <Label for="is_available">Availability Status</Label>
+                            <Select v-model="form.is_available">
+                                <SelectTrigger id="is_available">
+                                    <SelectValue placeholder="Select availability" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="true">Available</SelectItem>
+                                    <SelectItem value="false">Unavailable</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <InputError :message="form.errors.is_available" />
                         </div>
                     </div>
 

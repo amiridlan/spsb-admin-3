@@ -11,17 +11,20 @@ import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 
 defineProps<{
-    items: NavItem[];
+    mainItems: NavItem[];
+    eventSpaceItems: NavItem[];
+    hrmsItems: NavItem[];
 }>();
 
 const page = usePage();
 </script>
 
 <template>
+    <!-- Main Menu -->
     <SidebarGroup class="px-2 py-0">
         <SidebarGroupLabel>Main Menu</SidebarGroupLabel>
         <SidebarMenu>
-            <SidebarMenuItem v-for="item in items" :key="item.title">
+            <SidebarMenuItem v-for="item in mainItems" :key="item.title">
                 <SidebarMenuButton
                     as-child
                     :is-active="urlIsActive(item.href, page.url)"
@@ -37,10 +40,21 @@ const page = usePage();
     </SidebarGroup>
 
     <!-- Event Space Group -->
-    <SidebarGroup class="px-2 py-0">
+    <SidebarGroup v-if="eventSpaceItems.length > 0" class="px-2 py-0">
         <SidebarGroupLabel>Event Space</SidebarGroupLabel>
         <SidebarMenu>
-            <!-- Empty for now -->
+            <SidebarMenuItem v-for="item in eventSpaceItems" :key="item.title">
+                <SidebarMenuButton
+                    as-child
+                    :is-active="urlIsActive(item.href, page.url)"
+                    :tooltip="item.title"
+                >
+                    <Link :href="item.href">
+                        <component :is="item.icon" />
+                        <span>{{ item.title }}</span>
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
         </SidebarMenu>
     </SidebarGroup>
 
@@ -53,10 +67,21 @@ const page = usePage();
     </SidebarGroup>
 
     <!-- HRMS Group -->
-    <SidebarGroup class="px-2 py-0">
+    <SidebarGroup v-if="hrmsItems.length > 0" class="px-2 py-0">
         <SidebarGroupLabel>HRMS</SidebarGroupLabel>
         <SidebarMenu>
-            <!-- Empty for now -->
+            <SidebarMenuItem v-for="item in hrmsItems" :key="item.title">
+                <SidebarMenuButton
+                    as-child
+                    :is-active="urlIsActive(item.href, page.url)"
+                    :tooltip="item.title"
+                >
+                    <Link :href="item.href">
+                        <component :is="item.icon" />
+                        <span>{{ item.title }}</span>
+                    </Link>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
         </SidebarMenu>
     </SidebarGroup>
 </template>
