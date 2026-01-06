@@ -2,24 +2,13 @@
 
 namespace App\Http\Resources;
 
-use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\JsonResource;
+use Modules\Staff\Http\Resources\StaffResource as ModuleStaffResource;
 
-class StaffResource extends JsonResource
+/**
+ * Backwards compatibility alias
+ * @deprecated Use Modules\Staff\Http\Resources\StaffResource instead
+ */
+class StaffResource extends ModuleStaffResource
 {
-    public function toArray(Request $request): array
-    {
-        return [
-            'id' => $this->id,
-            'position' => $this->position,
-            'specializations' => $this->specializations,
-            'is_available' => $this->is_available,
-            'notes' => $this->notes,
-            'user' => [
-                'id' => $this->user->id,
-                'name' => $this->user->name,
-                'email' => $this->user->email,
-            ],
-        ];
-    }
+    // All functionality inherited from module resource
 }

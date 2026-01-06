@@ -2,21 +2,13 @@
 
 namespace App\Http\Resources;
 
-use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\JsonResource;
+use Modules\Events\Http\Resources\EventSpaceResource as ModuleEventSpaceResource;
 
-class EventSpaceResource extends JsonResource
+/**
+ * Backwards compatibility alias
+ * @deprecated Use Modules\Events\Http\Resources\EventSpaceResource instead
+ */
+class EventSpaceResource extends ModuleEventSpaceResource
 {
-    public function toArray(Request $request): array
-    {
-        return [
-            'id' => $this->id,
-            'name' => $this->name,
-            'location' => $this->location,
-            'description' => $this->description,
-            'capacity' => $this->capacity,
-            'is_active' => $this->is_active,
-            'created_at' => $this->created_at->toISOString(),
-        ];
-    }
+    // All functionality inherited from module resource
 }

@@ -11,9 +11,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
+use Modules\Events\Contracts\EventAnalyticsServiceInterface;
+use Modules\Events\Contracts\EventSpaceServiceInterface;
+use Modules\Staff\Contracts\StaffAnalyticsServiceInterface;
 
 class ReportsController extends Controller
 {
+    public function __construct(
+        protected EventAnalyticsServiceInterface $eventAnalytics,
+        protected EventSpaceServiceInterface $eventSpaceService,
+        protected StaffAnalyticsServiceInterface $staffAnalytics
+    ) {}
     /**
      * Display reports page
      */
@@ -113,161 +121,14 @@ class ReportsController extends Controller
     protected function buildReport(array $filters): array
     {
         return match ($filters['report_type']) {
-            'bookings' => $this->buildBookingsReport($filters),
-            'spaces' => $this->buildSpacesReport($filters),
-            'staff' => $this->buildStaffReport($filters),
+            'bookings' => $this->eventAnalytics->generateReport('bookings', $filters),
+            'spaces' => $this->eventSpaceService->getSpacesReport($filters),
+            'staff' => $this->staffAnalytics->generateReport($filters),
             'financial' => $this->buildFinancialReport($filters),
             'custom' => $this->buildCustomReport($filters),
         };
     }
 
-    /**
-     * Build bookings report
-     */
-    protected function buildBookingsReport(array $filters): array
-    {
-        $query = Event::with(['eventSpace', 'creator', 'staff.user'])
-            ->whereBetween('start_date', [$filters['start_date'], $filters['end_date']]);
-
-        // Apply filters
-        if (isset($filters['space_id'])) {
-            $query->where('event_space_id', $filters['space_id']);
-        }
-
-        if (isset($filters['status'])) {
-            $query->where('status', $filters['status']);
-        } elseif (!($filters['include_cancelled'] ?? false)) {
-            $query->where('status', '!=', 'cancelled');
-        }
-
-        $events = $query->orderBy('start_date')->get();
-
-        $data = $events->map(function ($event) {
-            return [
-                'id' => $event->id,
-                'title' => $event->title,
-                'space' => $event->eventSpace->name,
-                'client_name' => $event->client_name,
-                'client_email' => $event->client_email,
-                'client_phone' => $event->client_phone,
-                'start_date' => $event->start_date->format('Y-m-d'),
-                'end_date' => $event->end_date->format('Y-m-d'),
-                'duration' => $event->start_date->diffInDays($event->end_date) + 1,
-                'status' => $event->status,
-                'staff_count' => $event->staff->count(),
-                'created_by' => $event->creator->name,
-                'created_at' => $event->created_at->format('Y-m-d H:i'),
-            ];
-        });
-
-        return [
-            'type' => 'bookings',
-            'title' => 'Bookings Report',
-            'period' => sprintf('%s to %s', $filters['start_date'], $filters['end_date']),
-            'total_count' => $data->count(),
-            'data' => $data->toArray(),
-            'summary' => [
-                'total_bookings' => $data->count(),
-                'total_days' => $data->sum('duration'),
-                'avg_duration' => $data->count() > 0 ? round($data->avg('duration'), 1) : 0,
-                'by_status' => $events->groupBy('status')->map->count(),
-            ],
-        ];
-    }
-
-    /**
-     * Build spaces report
-     */
-    protected function buildSpacesReport(array $filters): array
-    {
-        $spaces = EventSpace::withCount([
-            'events' => function ($query) use ($filters) {
-                $query->whereBetween('start_date', [$filters['start_date'], $filters['end_date']]);
-                if (!($filters['include_cancelled'] ?? false)) {
-                    $query->where('status', '!=', 'cancelled');
-                }
-            }
-        ])->where('is_active', true)->get();
-
-        $data = $spaces->map(function ($space) use ($filters) {
-            $events = $space->events()
-                ->whereBetween('start_date', [$filters['start_date'], $filters['end_date']])
-                ->where('status', '!=', 'cancelled')
-                ->get();
-
-            $totalDays = $events->sum(
-                fn($event) =>
-                $event->start_date->diffInDays($event->end_date) + 1
-            );
-
-            return [
-                'id' => $space->id,
-                'name' => $space->name,
-                'location' => $space->location,
-                'capacity' => $space->capacity,
-                'booking_count' => $space->events_count,
-                'total_days' => $totalDays,
-                'avg_duration' => $space->events_count > 0 ? round($totalDays / $space->events_count, 1) : 0,
-            ];
-        })->sortByDesc('booking_count');
-
-        return [
-            'type' => 'spaces',
-            'title' => 'Event Spaces Report',
-            'period' => sprintf('%s to %s', $filters['start_date'], $filters['end_date']),
-            'total_count' => $spaces->count(),
-            'data' => $data->values()->toArray(),
-            'summary' => [
-                'total_spaces' => $spaces->count(),
-                'total_bookings' => $data->sum('booking_count'),
-                'most_booked' => $data->first()['name'] ?? 'N/A',
-                'least_booked' => $data->last()['name'] ?? 'N/A',
-            ],
-        ];
-    }
-
-    /**
-     * Build staff report
-     */
-    protected function buildStaffReport(array $filters): array
-    {
-        $staff = Staff::with('user')->get();
-
-        $data = $staff->map(function ($staffMember) use ($filters) {
-            $assignments = $staffMember->events()
-                ->whereBetween('start_date', [$filters['start_date'], $filters['end_date']])
-                ->where('status', '!=', 'cancelled')
-                ->get();
-
-            $totalDays = $assignments->sum(
-                fn($event) =>
-                $event->start_date->diffInDays($event->end_date) + 1
-            );
-
-            return [
-                'id' => $staffMember->id,
-                'name' => $staffMember->user->name,
-                'position' => $staffMember->position,
-                'assignment_count' => $assignments->count(),
-                'total_days' => $totalDays,
-                'events_by_status' => $assignments->groupBy('status')->map->count(),
-            ];
-        })->sortByDesc('assignment_count');
-
-        return [
-            'type' => 'staff',
-            'title' => 'Staff Assignments Report',
-            'period' => sprintf('%s to %s', $filters['start_date'], $filters['end_date']),
-            'total_count' => $staff->count(),
-            'data' => $data->values()->toArray(),
-            'summary' => [
-                'total_staff' => $staff->count(),
-                'total_assignments' => $data->sum('assignment_count'),
-                'avg_assignments' => $staff->count() > 0 ? round($data->avg('assignment_count'), 1) : 0,
-                'most_active' => $data->first()['name'] ?? 'N/A',
-            ],
-        ];
-    }
 
     /**
      * Build financial report (placeholder)
@@ -292,14 +153,14 @@ class ReportsController extends Controller
      */
     protected function buildCustomReport(array $filters): array
     {
-        // Combines multiple report types
+        // Combines multiple report types using services
         return [
             'type' => 'custom',
             'title' => 'Custom Report',
             'period' => sprintf('%s to %s', $filters['start_date'], $filters['end_date']),
-            'bookings' => $this->buildBookingsReport($filters),
-            'spaces' => $this->buildSpacesReport($filters),
-            'staff' => $this->buildStaffReport($filters),
+            'bookings' => $this->eventAnalytics->generateReport('bookings', $filters),
+            'spaces' => $this->eventSpaceService->getSpacesReport($filters),
+            'staff' => $this->staffAnalytics->generateReport($filters),
         ];
     }
 

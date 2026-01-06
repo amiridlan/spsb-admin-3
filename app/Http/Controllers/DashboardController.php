@@ -11,9 +11,19 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use Modules\Events\Contracts\EventAnalyticsServiceInterface;
+use Modules\Events\Contracts\EventServiceInterface;
+use Modules\Events\Contracts\EventSpaceServiceInterface;
+use Modules\Staff\Contracts\StaffAnalyticsServiceInterface;
 
 class DashboardController extends Controller
 {
+    public function __construct(
+        protected EventAnalyticsServiceInterface $eventAnalytics,
+        protected EventServiceInterface $eventService,
+        protected EventSpaceServiceInterface $eventSpaceService,
+        protected StaffAnalyticsServiceInterface $staffAnalytics
+    ) {}
     /**
      * Display the dashboard based on user role
      */
@@ -34,81 +44,31 @@ class DashboardController extends Controller
     protected function adminDashboard(User $user): Response
     {
         $today = Carbon::today();
-        $startOfMonth = Carbon::now()->startOfMonth();
-        $endOfMonth = Carbon::now()->endOfMonth();
 
-        // Overview Statistics
-        $stats = [
-            'total_events' => Event::count(),
-            'total_spaces' => EventSpace::where('is_active', true)->count(),
-            'total_staff' => Staff::count(),
-            'total_users' => User::count(),
+        // Overview Statistics (using service)
+        $stats = $this->eventAnalytics->getDashboardStats('admin');
+        $stats['total_staff'] = Staff::count(); // Simple count, no complex logic
+        $stats['total_users'] = User::count(); // Simple count, no complex logic
+        $stats['month_revenue'] = 0; // Placeholder for future revenue tracking
 
-            // This month statistics
-            'month_bookings' => Event::whereBetween('start_date', [$startOfMonth, $endOfMonth])->count(),
-            'month_revenue' => 0, // Placeholder for future revenue tracking
+        // Upcoming Events (using service)
+        $upcomingEvents = $this->eventService->getUpcoming(limit: 10);
 
-            // Status breakdown
-            'pending_bookings' => Event::where('status', 'pending')->count(),
-            'confirmed_bookings' => Event::where('status', 'confirmed')->count(),
-            'completed_bookings' => Event::where('status', 'completed')->count(),
-            'cancelled_bookings' => Event::where('status', 'cancelled')->count(),
-        ];
+        // Recent Bookings (using service)
+        $recentBookings = $this->eventService->getRecentBookings(limit: 10);
 
-        // Upcoming Events (next 30 days)
-        $upcomingEvents = Event::with(['eventSpace', 'creator'])
-            ->where('start_date', '>=', $today)
-            ->where('start_date', '<=', $today->copy()->addDays(30))
-            ->where('status', '!=', 'cancelled')
-            ->orderBy('start_date')
-            ->limit(10)
-            ->get();
+        // Events by Status (using service)
+        $dateRange = ['start' => Carbon::now()->startOfYear(), 'end' => Carbon::now()->endOfYear()];
+        $eventsByStatus = $this->eventAnalytics->getStatusMetrics($dateRange);
 
-        // Recent Bookings (last 10)
-        $recentBookings = Event::with(['eventSpace', 'creator'])
-            ->orderBy('created_at', 'desc')
-            ->limit(10)
-            ->get();
+        // Events by Month (using service)
+        $eventsByMonth = $this->eventAnalytics->getEventsByMonth(months: 6);
 
-        // Events by Status (for chart)
-        $eventsByStatus = Event::select('status', DB::raw('count(*) as count'))
-            ->groupBy('status')
-            ->get()
-            ->mapWithKeys(fn($item) => [$item->status => $item->count]);
+        // Space Utilization (using service)
+        $spaceUtilization = $this->eventSpaceService->getSpaceUtilization(limit: 5);
 
-        // Events by Month (last 6 months)
-        $eventsByMonth = Event::select(
-            DB::raw('DATE_FORMAT(start_date, "%Y-%m-01") as month'),
-            DB::raw('count(*) as count')
-        )
-            ->where('start_date', '>=', Carbon::now()->subMonths(6))
-            ->groupBy('month')
-            ->orderBy('month')
-            ->get()
-            ->map(fn($item) => [
-                'month' => Carbon::parse($item->month)->format('M Y'),
-                'count' => $item->count,
-            ]);
-
-        // Space Utilization (most booked spaces)
-        $spaceUtilization = EventSpace::withCount([
-            'events' => fn($query) => $query->where('status', '!=', 'cancelled')
-        ])
-            ->where('is_active', true)
-            ->orderBy('events_count', 'desc')
-            ->limit(5)
-            ->get();
-
-        // Pending Actions
-        $pendingActions = [
-            'pending_approvals' => Event::where('status', 'pending')->count(),
-            'unassigned_staff' => Event::where('status', 'confirmed')
-                ->whereDoesntHave('staff')
-                ->count(),
-            'today_events' => Event::whereDate('start_date', $today)
-                ->where('status', '!=', 'cancelled')
-                ->count(),
-        ];
+        // Pending Actions (using service)
+        $pendingActions = $this->eventAnalytics->getPendingActions();
 
         return Inertia::render('Dashboard', [
             'role' => $user->role,
@@ -137,20 +97,15 @@ class DashboardController extends Controller
         $staff = $user->staffProfile;
         $today = Carbon::today();
 
-        // Staff Statistics
-        $stats = [
-            'total_assignments' => $staff->events()->count(),
-            'upcoming_assignments' => $staff->upcomingAssignments()->count(),
-            'current_assignments' => $staff->currentAssignments()->count(),
-            'completed_assignments' => $staff->pastAssignments()->where('status', 'completed')->count(),
-        ];
+        // Staff Statistics (using service)
+        $stats = $this->staffAnalytics->getStaffDashboardStats($staff->id);
 
-        // Current Assignments (happening now)
+        // Current Assignments (happening now) - Keep model scope as it's well-encapsulated
         $currentAssignments = $staff->currentAssignments()
             ->with(['eventSpace', 'creator'])
             ->get();
 
-        // Upcoming Assignments (next 30 days)
+        // Upcoming Assignments (next 30 days) - Keep model query as it's specific to staff context
         $upcomingAssignments = $staff->events()
             ->with(['eventSpace', 'creator'])
             ->where('start_date', '>', $today)
@@ -160,7 +115,7 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
-        // This Week's Schedule
+        // This Week's Schedule - Keep model query as it's specific to staff context
         $weekStart = Carbon::now()->startOfWeek();
         $weekEnd = Carbon::now()->endOfWeek();
 
@@ -178,7 +133,7 @@ class DashboardController extends Controller
             ->orderBy('start_date')
             ->get();
 
-        // Today's Events
+        // Today's Events - Keep model query as it's specific to staff context
         $todayEvents = $staff->events()
             ->with(['eventSpace'])
             ->whereDate('start_date', '<=', $today)
