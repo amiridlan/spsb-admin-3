@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
+import axios from 'axios';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,7 +15,23 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { FileText, Download, Eye, Calendar, Building2, Users, DollarSign } from 'lucide-vue-next';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from '@/components/ui/dialog';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import { FileText, Download, Eye, Calendar, Building2, Users, DollarSign, X } from 'lucide-vue-next';
 
 interface Props {
     spaces: any[];
@@ -30,6 +47,11 @@ const spaceId = ref('');
 const staffId = ref('');
 const status = ref('');
 const includeCancelled = ref(false);
+
+// Preview modal state
+const showPreview = ref(false);
+const reportData = ref<any>(null);
+const isLoadingReport = ref(false);
 
 const breadcrumbs = [
     { title: 'Dashboard', href: '/dashboard' },
@@ -66,7 +88,7 @@ function setQuickRange(range: string) {
     }
 }
 
-function generateReport() {
+async function generateReport() {
     if (!startDate.value || !endDate.value) {
         alert('Please select start and end dates');
         return;
@@ -83,7 +105,19 @@ function generateReport() {
     if (status.value) params.status = status.value;
     if (includeCancelled.value) params.include_cancelled = '1';
 
-    router.post('/admin/reports/generate', params);
+    try {
+        isLoadingReport.value = true;
+        const response = await axios.post('/admin/reports/generate', params);
+
+        // Controller returns JSON with report data
+        reportData.value = response.data.report;
+        showPreview.value = true;
+    } catch (error) {
+        console.error('Error generating report:', error);
+        alert('Failed to generate report. Please try again.');
+    } finally {
+        isLoadingReport.value = false;
+    }
 }
 
 function exportCsv() {
@@ -253,9 +287,9 @@ const reportTypes = [
 
                     <!-- Actions -->
                     <div class="flex flex-wrap gap-3 pt-4">
-                        <Button @click="generateReport">
+                        <Button @click="generateReport" :disabled="isLoadingReport">
                             <Eye class="mr-2 h-4 w-4" />
-                            Preview Report
+                            {{ isLoadingReport ? 'Generating...' : 'Preview Report' }}
                         </Button>
                         <Button variant="outline" @click="exportCsv">
                             <Download class="mr-2 h-4 w-4" />
@@ -326,5 +360,214 @@ const reportTypes = [
                 </CardContent>
             </Card>
         </div>
+
+        <!-- Report Preview Modal -->
+        <Dialog v-model:open="showPreview">
+            <DialogContent class=" max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                    <DialogTitle v-if="reportData">{{ reportData.title }}</DialogTitle>
+                    <DialogDescription v-if="reportData">
+                        {{ reportData.period }}
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div v-if="reportData" class="space-y-6">
+                    <!-- Bookings Report -->
+                    <div v-if="reportData.type === 'bookings' && reportData.data" >
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>ID</TableHead>
+                                    <TableHead>Title</TableHead>
+                                    <TableHead>Space</TableHead>
+                                    <TableHead>Client</TableHead>
+                                    <TableHead>Start Date</TableHead>
+                                    <TableHead>End Date</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead>Staff</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                <TableRow v-for="row in reportData.data" :key="row.id">
+                                    <TableCell>{{ row.id }}</TableCell>
+                                    <TableCell>{{ row.title }}</TableCell>
+                                    <TableCell>{{ row.space }}</TableCell>
+                                    <TableCell>
+                                        <div>{{ row.client_name }}</div>
+                                        <div class="text-xs text-muted-foreground">{{ row.client_email }}</div>
+                                    </TableCell>
+                                    <TableCell>{{ row.start_date }}</TableCell>
+                                    <TableCell>{{ row.end_date }}</TableCell>
+                                    <TableCell>
+                                        <span :class="[
+                                            'inline-flex items-center rounded-full px-2 py-1 text-xs font-medium',
+                                            row.status === 'confirmed' ? 'bg-green-100 text-green-700' :
+                                            row.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                                            row.status === 'completed' ? 'bg-blue-100 text-blue-700' :
+                                            'bg-gray-100 text-gray-700'
+                                        ]">
+                                            {{ row.status }}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell>{{ row.staff_count }}</TableCell>
+                                </TableRow>
+                            </TableBody>
+                        </Table>
+                    </div>
+
+                    <!-- Spaces Report -->
+                    <div v-if="reportData.type === 'spaces' && reportData.data">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>ID</TableHead>
+                                    <TableHead>Name</TableHead>
+                                    <TableHead>Location</TableHead>
+                                    <TableHead>Capacity</TableHead>
+                                    <TableHead>Bookings</TableHead>
+                                    <TableHead>Total Days</TableHead>
+                                    <TableHead>Avg Duration</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                <TableRow v-for="row in reportData.data" :key="row.id">
+                                    <TableCell>{{ row.id }}</TableCell>
+                                    <TableCell>{{ row.name }}</TableCell>
+                                    <TableCell>{{ row.location }}</TableCell>
+                                    <TableCell>{{ row.capacity }}</TableCell>
+                                    <TableCell>{{ row.booking_count }}</TableCell>
+                                    <TableCell>{{ row.total_days }}</TableCell>
+                                    <TableCell>{{ row.avg_duration }}</TableCell>
+                                </TableRow>
+                            </TableBody>
+                        </Table>
+                    </div>
+
+                    <!-- Staff Report -->
+                    <div v-if="reportData.type === 'staff' && reportData.data">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>ID</TableHead>
+                                    <TableHead>Name</TableHead>
+                                    <TableHead>Position</TableHead>
+                                    <TableHead>Assignments</TableHead>
+                                    <TableHead>Total Days</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                <TableRow v-for="row in reportData.data" :key="row.id">
+                                    <TableCell>{{ row.id }}</TableCell>
+                                    <TableCell>{{ row.name }}</TableCell>
+                                    <TableCell>{{ row.position }}</TableCell>
+                                    <TableCell>{{ row.assignment_count }}</TableCell>
+                                    <TableCell>{{ row.total_days }}</TableCell>
+                                </TableRow>
+                            </TableBody>
+                        </Table>
+                    </div>
+
+                    <!-- Custom Report -->
+                    <div v-if="reportData.type === 'custom'" class="space-y-6">
+                        <div v-if="reportData.bookings">
+                            <h3 class="text-lg font-semibold mb-3">Bookings</h3>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Title</TableHead>
+                                        <TableHead>Space</TableHead>
+                                        <TableHead>Client</TableHead>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead>Status</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    <TableRow v-for="row in reportData.bookings.data?.slice(0, 5)" :key="row.id">
+                                        <TableCell>{{ row.title }}</TableCell>
+                                        <TableCell>{{ row.space }}</TableCell>
+                                        <TableCell>{{ row.client_name }}</TableCell>
+                                        <TableCell>{{ row.start_date }}</TableCell>
+                                        <TableCell>{{ row.status }}</TableCell>
+                                    </TableRow>
+                                </TableBody>
+                            </Table>
+                            <p v-if="reportData.bookings.data?.length > 5" class="text-sm text-muted-foreground mt-2">
+                                Showing first 5 of {{ reportData.bookings.data.length }} bookings
+                            </p>
+                        </div>
+
+                        <div v-if="reportData.spaces">
+                            <h3 class="text-lg font-semibold mb-3">Spaces</h3>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Name</TableHead>
+                                        <TableHead>Bookings</TableHead>
+                                        <TableHead>Total Days</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    <TableRow v-for="row in reportData.spaces.data?.slice(0, 5)" :key="row.id">
+                                        <TableCell>{{ row.name }}</TableCell>
+                                        <TableCell>{{ row.booking_count }}</TableCell>
+                                        <TableCell>{{ row.total_days }}</TableCell>
+                                    </TableRow>
+                                </TableBody>
+                            </Table>
+                        </div>
+
+                        <div v-if="reportData.staff">
+                            <h3 class="text-lg font-semibold mb-3">Staff</h3>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Name</TableHead>
+                                        <TableHead>Position</TableHead>
+                                        <TableHead>Assignments</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    <TableRow v-for="row in reportData.staff.data?.slice(0, 5)" :key="row.id">
+                                        <TableCell>{{ row.name }}</TableCell>
+                                        <TableCell>{{ row.position }}</TableCell>
+                                        <TableCell>{{ row.assignment_count }}</TableCell>
+                                    </TableRow>
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </div>
+
+                    <!-- Financial Report -->
+                    <div v-if="reportData.type === 'financial'" class="text-center py-8">
+                        <p class="text-muted-foreground">{{ reportData.summary?.note || 'Financial reporting coming soon' }}</p>
+                    </div>
+
+                    <!-- Summary Section -->
+                    <div v-if="reportData.summary" class="border-t pt-4">
+                        <h3 class="text-lg font-semibold mb-3">Summary</h3>
+                        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                            <Card v-for="(value, key) in reportData.summary" :key="key">
+                                <CardHeader class="pb-2">
+                                    <CardDescription class="text-xs">
+                                        {{ key.toString().replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) }}
+                                    </CardDescription>
+                                    <CardTitle class="text-2xl">{{ value }}</CardTitle>
+                                </CardHeader>
+                            </Card>
+                        </div>
+                    </div>
+                </div>
+
+                <DialogFooter>
+                    <Button variant="outline" @click="showPreview = false">
+                        Close
+                    </Button>
+                    <Button @click="exportCsv">
+                        <Download class="mr-2 h-4 w-4" />
+                        Export CSV
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     </AppLayout>
 </template>

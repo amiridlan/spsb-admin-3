@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import {
     Calendar,
     Users,
@@ -15,6 +16,8 @@ import {
     CheckCircle,
     XCircle,
     CalendarDays,
+    ChevronUp,
+    ChevronDown,
 } from 'lucide-vue-next';
 
 interface Props {
@@ -32,6 +35,13 @@ interface Props {
     weekSchedule?: any[];
     todayEvents?: any[];
     noProfile?: boolean;
+    bookingsTrend?: {
+        labels: string[];
+        values: number[];
+        change: number;
+        changeType: 'increase' | 'decrease' | 'stable';
+    };
+    calendarEvents?: any[];
 }
 
 const props = defineProps<Props>();
@@ -57,6 +67,35 @@ const formatDate = (date: string) => {
         year: 'numeric',
     });
 };
+
+// Helper function to check if a date has events for a specific month/year
+const hasEventsOnDate = (day: number, month: number, year: number) => {
+    if (!props.calendarEvents || !Array.isArray(props.calendarEvents)) return false;
+
+    // Format check date as YYYY-MM-DD for string comparison
+    const checkDateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+    return props.calendarEvents.some((event: any) => {
+        // Use string comparison to avoid timezone issues
+        // FullCalendar end date is exclusive (event.end is the day AFTER the last day)
+        // So we need to compare: start <= checkDate < end
+        return event.start <= checkDateStr && checkDateStr < event.end;
+    });
+};
+
+const getEventCountForDay = (day: number, month: number, year: number) => {
+    if (!props.calendarEvents || !Array.isArray(props.calendarEvents)) return 0;
+
+    // Format check date as YYYY-MM-DD for string comparison
+    const checkDateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+    return props.calendarEvents.filter((event: any) => {
+        // Use string comparison to avoid timezone issues
+        // FullCalendar end date is exclusive (event.end is the day AFTER the last day)
+        // So we need to compare: start <= checkDate < end
+        return event.start <= checkDateStr && checkDateStr < event.end;
+    }).length;
+};
 </script>
 
 <template>
@@ -73,7 +112,7 @@ const formatDate = (date: string) => {
             </div>
 
             <!-- Stats Overview -->
-            <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div class="grid gap-4 md:grid-cols-1 lg:grid-cols-1">
                 <Card>
                     <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle class="text-sm font-medium">Total Events</CardTitle>
@@ -84,39 +123,6 @@ const formatDate = (date: string) => {
                         <p class="text-xs text-muted-foreground">
                             {{ stats.month_bookings }} this month
                         </p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle class="text-sm font-medium">Event Spaces</CardTitle>
-                        <Building2 class="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div class="text-2xl font-bold">{{ stats.total_spaces }}</div>
-                        <p class="text-xs text-muted-foreground">Active spaces</p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle class="text-sm font-medium">Staff Members</CardTitle>
-                        <Users class="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div class="text-2xl font-bold">{{ stats.total_staff }}</div>
-                        <p class="text-xs text-muted-foreground">Available for assignments</p>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle class="text-sm font-medium">Pending Actions</CardTitle>
-                        <AlertCircle class="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div class="text-2xl font-bold">{{ pendingActions.pending_approvals }}</div>
-                        <p class="text-xs text-muted-foreground">Require approval</p>
                     </CardContent>
                 </Card>
             </div>
@@ -172,6 +178,7 @@ const formatDate = (date: string) => {
                 </Card>
             </div>
 
+            <!-- Calendar and Bookings Trend -->
             <div class="grid gap-4 md:grid-cols-2">
                 <!-- Upcoming Events -->
                 <Card>
@@ -205,6 +212,123 @@ const formatDate = (date: string) => {
                             </div>
                         </div>
                         <p v-else class="text-sm text-muted-foreground">No upcoming events</p>
+                    </CardContent>
+                </Card>
+                <!-- Calendar -->
+                <Card>
+                    <CardHeader>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <CardTitle>Calendar</CardTitle>
+                                <CardDescription>
+                                    {{ calendarEvents?.length || 0 }} event(s) this month
+                                </CardDescription>
+                            </div>
+                            <Button variant="outline" size="sm" as-child>
+                                <Link href="/calendar">
+                                    <CalendarDays class="mr-2 h-4 w-4" />
+                                    View Full Calendar
+                                </Link>
+                            </Button>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <CalendarComponent class="w-full">
+                            <template #calendar-day="{ day, displayedMonth, displayedYear }">
+                                <span>{{ day }}</span>
+                                <div
+                                    v-if="hasEventsOnDate(day, displayedMonth, displayedYear)"
+                                    class="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5"
+                                >
+                                    <div class="h-1 w-1 rounded-full bg-primary"></div>
+                                    <div
+                                        v-if="getEventCountForDay(day, displayedMonth, displayedYear) > 1"
+                                        class="h-1 w-1 rounded-full bg-primary"
+                                    ></div>
+                                    <div
+                                        v-if="getEventCountForDay(day, displayedMonth, displayedYear) > 2"
+                                        class="h-1 w-1 rounded-full bg-primary"
+                                    ></div>
+                                </div>
+                            </template>
+                        </CalendarComponent>
+                    </CardContent>
+                </Card>
+
+
+            </div>
+
+            <div class="grid gap-4 md:grid-cols-2">
+                <!-- Bookings Trend Graph -->
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Bookings Trend</CardTitle>
+                        <CardDescription>Last 6 months</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div v-if="bookingsTrend" class="space-y-4">
+                            <!-- Trend Indicator -->
+                            <div class="flex items-center gap-2">
+                                <div :class="[
+                                    'flex items-center gap-1 text-sm font-medium',
+                                    bookingsTrend.changeType === 'increase' ? 'text-green-600' :
+                                    bookingsTrend.changeType === 'decrease' ? 'text-red-600' :
+                                    'text-gray-600'
+                                ]">
+                                    <ChevronUp v-if="bookingsTrend.changeType === 'increase'" class="h-4 w-4" />
+                                    <ChevronDown v-if="bookingsTrend.changeType === 'decrease'" class="h-4 w-4" />
+                                    <span>{{ Math.abs(bookingsTrend.change) }}%</span>
+                                    <span class="text-muted-foreground font-normal">
+                                        {{ bookingsTrend.changeType === 'increase' ? 'increase' : bookingsTrend.changeType === 'decrease' ? 'decrease' : 'no change' }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Simple Line Chart -->
+                            <div class="relative h-48">
+                                <svg class="w-full h-full" viewBox="0 0 600 200" preserveAspectRatio="none">
+                                    <!-- Grid lines -->
+                                    <line v-for="i in 5" :key="`grid-${i}`"
+                                          :x1="0" :y1="i * 40" :x2="600" :y2="i * 40"
+                                          stroke="#e5e7eb" stroke-width="1" />
+
+                                    <!-- Line chart -->
+                                    <polyline
+                                        :points="bookingsTrend.values.map((val, idx) => {
+                                            const x = (idx / (bookingsTrend.values.length - 1)) * 600;
+                                            const maxVal = Math.max(...bookingsTrend.values, 1);
+                                            const y = 200 - ((val / maxVal) * 180);
+                                            return `${x},${y}`;
+                                        }).join(' ')"
+                                        fill="none"
+                                        stroke="hsl(var(--primary))"
+                                        stroke-width="3"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+
+                                    <!-- Data points -->
+                                    <circle
+                                        v-for="(val, idx) in bookingsTrend.values"
+                                        :key="`point-${idx}`"
+                                        :cx="(idx / (bookingsTrend.values.length - 1)) * 600"
+                                        :cy="200 - ((val / Math.max(...bookingsTrend.values, 1)) * 180)"
+                                        r="4"
+                                        fill="hsl(var(--primary))"
+                                    />
+                                </svg>
+
+                                <!-- X-axis labels -->
+                                <div class="flex justify-between mt-2 text-xs text-muted-foreground">
+                                    <span v-for="(label, idx) in bookingsTrend.labels" :key="`label-${idx}`">
+                                        {{ label }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <p v-else class="text-sm text-muted-foreground text-center py-12">
+                            No trend data available
+                        </p>
                     </CardContent>
                 </Card>
 

@@ -70,6 +70,29 @@ class DashboardController extends Controller
         // Pending Actions (using service)
         $pendingActions = $this->eventAnalytics->getPendingActions();
 
+        // Bookings Trend for Graph (last 6 months)
+        $bookingsTrend = $this->calculateBookingsTrend();
+
+        // Calendar Events - get events for past 3 months to future 3 months
+        // This allows calendar navigation without losing event markers
+        $rangeStart = Carbon::now()->subMonths(3)->startOfMonth();
+        $rangeEnd = Carbon::now()->addMonths(3)->endOfMonth();
+
+        $allCalendarEvents = $this->eventService->getCalendarEvents();
+
+        // Filter events to include a wider range for calendar navigation
+        $filteredEvents = array_filter($allCalendarEvents, function($event) use ($rangeStart, $rangeEnd) {
+            $eventStart = Carbon::parse($event['start']);
+            // FullCalendar end date is exclusive, so actual last day is end - 1 day
+            $eventActualEnd = Carbon::parse($event['end'])->subDay();
+
+            // Include if the event overlaps with our date range
+            return $eventStart <= $rangeEnd && $eventActualEnd >= $rangeStart;
+        });
+
+        // Re-index array to ensure it's sent as JSON array, not object
+        $calendarEvents = array_values($filteredEvents);
+
         return Inertia::render('Dashboard', [
             'role' => $user->role,
             'stats' => $stats,
@@ -79,7 +102,55 @@ class DashboardController extends Controller
             'eventsByMonth' => $eventsByMonth,
             'spaceUtilization' => $spaceUtilization,
             'pendingActions' => $pendingActions,
+            'bookingsTrend' => $bookingsTrend,
+            'calendarEvents' => $calendarEvents,
         ]);
+    }
+
+    /**
+     * Calculate bookings trend for the last 6 months
+     */
+    protected function calculateBookingsTrend(): array
+    {
+        $months = [];
+        $values = [];
+
+        // Get last 6 months data
+        for ($i = 5; $i >= 0; $i--) {
+            $date = Carbon::now()->subMonths($i);
+            $startOfMonth = $date->copy()->startOfMonth();
+            $endOfMonth = $date->copy()->endOfMonth();
+
+            // Count bookings for this month
+            $count = Event::whereBetween('start_date', [$startOfMonth, $endOfMonth])
+                ->where('status', '!=', 'cancelled')
+                ->count();
+
+            $months[] = $date->format('M');
+            $values[] = $count;
+        }
+
+        // Calculate trend (compare last month vs previous month)
+        $lastMonth = end($values);
+        $previousMonth = $values[count($values) - 2] ?? 0;
+
+        $change = 0;
+        $changeType = 'stable';
+
+        if ($previousMonth > 0) {
+            $change = round((($lastMonth - $previousMonth) / $previousMonth) * 100, 1);
+            $changeType = $change > 0 ? 'increase' : ($change < 0 ? 'decrease' : 'stable');
+        } elseif ($lastMonth > 0) {
+            $change = 100;
+            $changeType = 'increase';
+        }
+
+        return [
+            'labels' => $months,
+            'values' => $values,
+            'change' => abs($change),
+            'changeType' => $changeType,
+        ];
     }
 
     /**

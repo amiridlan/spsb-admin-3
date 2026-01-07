@@ -39,7 +39,7 @@ class ReportsController extends Controller
     /**
      * Generate and preview report
      */
-    public function generate(Request $request): InertiaResponse
+    public function generate(Request $request)
     {
         $validated = $request->validate([
             'report_type' => ['required', 'in:bookings,spaces,staff,financial,custom'],
@@ -52,6 +52,15 @@ class ReportsController extends Controller
         ]);
 
         $reportData = $this->buildReport($validated);
+
+        // If this is an AJAX request (from axios), return JSON
+        // Otherwise, return Inertia response for full page render
+        if ($request->wantsJson() && !$request->header('X-Inertia')) {
+            return response()->json([
+                'report' => $reportData,
+                'filters' => $validated,
+            ]);
+        }
 
         return Inertia::render('admin/reports/Preview', [
             'report' => $reportData,
