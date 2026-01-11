@@ -25,9 +25,16 @@ interface User {
     email: string;
 }
 
+interface Department {
+    id: number;
+    name: string;
+    code: string | null;
+}
+
 interface Staff {
     id: number;
     user: User;
+    department?: Department | null;
     position: string | null;
     specializations: string[] | null;
     is_available: boolean;
@@ -84,6 +91,7 @@ const breadcrumbs = [
                         <TableRow>
                             <TableHead>Name</TableHead>
                             <TableHead>Email</TableHead>
+                            <TableHead>Department</TableHead>
                             <TableHead>Position</TableHead>
                             <TableHead>Specializations</TableHead>
                             <TableHead>Assignments</TableHead>
@@ -97,6 +105,12 @@ const breadcrumbs = [
                                 {{ member.user.name }}
                             </TableCell>
                             <TableCell>{{ member.user.email }}</TableCell>
+                            <TableCell>
+                                <Badge v-if="member.department" variant="outline">
+                                    {{ member.department.name }}
+                                </Badge>
+                                <span v-else class="text-sm text-muted-foreground">N/A</span>
+                            </TableCell>
                             <TableCell>
                                 {{ member.position || 'N/A' }}
                             </TableCell>

@@ -101,8 +101,9 @@ const breadcrumbs = [
                                         :value="role"
                                     >
                                         {{
-                                            role.charAt(0).toUpperCase() +
-                                            role.slice(1)
+                                            role === 'head_of_department'
+                                                ? 'Head of Department'
+                                                : role.charAt(0).toUpperCase() + role.slice(1)
                                         }}
                                     </SelectItem>
                                 </SelectContent>

@@ -26,6 +26,11 @@ class StaffServiceProvider extends ServiceProvider
             \Modules\Staff\Contracts\StaffAnalyticsServiceInterface::class,
             \Modules\Staff\Services\StaffAnalyticsService::class
         );
+
+        $this->app->bind(
+            \Modules\Staff\Contracts\LeaveServiceInterface::class,
+            \Modules\Staff\Services\LeaveService::class
+        );
     }
 
     /**

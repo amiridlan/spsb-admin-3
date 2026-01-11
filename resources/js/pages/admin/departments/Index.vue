@@ -3,13 +3,21 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Head, Link } from '@inertiajs/vue3';
-import { Plus, Edit, Trash2 } from 'lucide-vue-next';
+import { Plus, Edit, Trash2, Users } from 'lucide-vue-next';
 
-interface User {
+interface Department {
     id: number;
     name: string;
-    email: string;
-    role: string;
+    code: string | null;
+    description: string | null;
+    head_user_id: number | null;
+    is_active: boolean;
+    head?: {
+        id: number;
+        name: string;
+        email: string;
+    } | null;
+    staff_count?: number;
 }
 
 interface Pagination {
@@ -20,7 +28,7 @@ interface Pagination {
 }
 
 interface Props {
-    users: User[];
+    departments: Department[];
     pagination?: Pagination;
 }
 
@@ -28,26 +36,26 @@ const props = defineProps<Props>();
 
 const breadcrumbs = [
     { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Users', href: '/admin/users' },
+    { title: 'Departments', href: '/admin/departments' },
 ];
 </script>
 
 <template>
-    <Head title="Users" />
+    <Head title="Departments" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex flex-col gap-6 p-6">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-semibold">Users</h1>
+                    <h1 class="text-2xl font-semibold">Departments</h1>
                     <p class="text-sm text-muted-foreground">
-                        Manage application users
+                        Manage organization departments
                     </p>
                 </div>
                 <Button as-child>
-                    <Link href="/admin/users/create">
+                    <Link href="/admin/departments/create">
                         <Plus class="mr-2 h-4 w-4" />
-                        Add User
+                        Add Department
                     </Link>
                 </Button>
             </div>
@@ -60,10 +68,16 @@ const breadcrumbs = [
                                 Name
                             </th>
                             <th class="h-12 px-4 text-left align-middle font-medium">
-                                Email
+                                Code
                             </th>
                             <th class="h-12 px-4 text-left align-middle font-medium">
-                                Role
+                                Department Head
+                            </th>
+                            <th class="h-12 px-4 text-left align-middle font-medium">
+                                Staff Count
+                            </th>
+                            <th class="h-12 px-4 text-left align-middle font-medium">
+                                Status
                             </th>
                             <th class="h-12 px-4 text-left align-middle font-medium">
                                 Actions
@@ -72,29 +86,40 @@ const breadcrumbs = [
                     </thead>
                     <tbody>
                         <tr
-                            v-for="user in props.users"
-                            :key="user.id"
+                            v-for="department in props.departments"
+                            :key="department.id"
                             class="border-b"
                         >
-                            <td class="p-4 align-middle">{{ user.name }}</td>
-                            <td class="p-4 align-middle">{{ user.email }}</td>
                             <td class="p-4 align-middle">
-                                <Badge
-                                    :variant="
-                                        user.role === 'superadmin'
-                                            ? 'destructive'
-                                            : user.role === 'admin'
-                                            ? 'default'
-                                            : user.role === 'head_of_department'
-                                            ? 'outline'
-                                            : 'secondary'
-                                    "
-                                >
-                                    {{
-                                        user.role === 'head_of_department'
-                                            ? 'Head of Department'
-                                            : user.role.charAt(0).toUpperCase() + user.role.slice(1)
-                                    }}
+                                <div>
+                                    <div class="font-medium">{{ department.name }}</div>
+                                    <div v-if="department.description" class="text-sm text-muted-foreground">
+                                        {{ department.description }}
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="p-4 align-middle">
+                                <Badge variant="outline" v-if="department.code">
+                                    {{ department.code }}
+                                </Badge>
+                                <span v-else class="text-sm text-muted-foreground">-</span>
+                            </td>
+                            <td class="p-4 align-middle">
+                                <div v-if="department.head">
+                                    <div class="font-medium text-sm">{{ department.head.name }}</div>
+                                    <div class="text-xs text-muted-foreground">{{ department.head.email }}</div>
+                                </div>
+                                <span v-else class="text-sm text-muted-foreground">Not assigned</span>
+                            </td>
+                            <td class="p-4 align-middle">
+                                <div class="flex items-center gap-2">
+                                    <Users class="h-4 w-4 text-muted-foreground" />
+                                    <span>{{ department.staff_count || 0 }}</span>
+                                </div>
+                            </td>
+                            <td class="p-4 align-middle">
+                                <Badge :variant="department.is_active ? 'default' : 'secondary'">
+                                    {{ department.is_active ? 'Active' : 'Inactive' }}
                                 </Badge>
                             </td>
                             <td class="p-4 align-middle">
@@ -105,7 +130,7 @@ const breadcrumbs = [
                                         as-child
                                     >
                                         <Link
-                                            :href="`/admin/users/${user.id}/edit`"
+                                            :href="`/admin/departments/${department.id}/edit`"
                                         >
                                             <Edit class="h-4 w-4" />
                                         </Link>
@@ -115,7 +140,7 @@ const breadcrumbs = [
                                         size="sm"
                                         @click="
                                             $inertia.delete(
-                                                `/admin/users/${user.id}`
+                                                `/admin/departments/${department.id}`
                                             )
                                         "
                                     >

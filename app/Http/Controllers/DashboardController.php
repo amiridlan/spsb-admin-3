@@ -15,6 +15,7 @@ use Modules\Events\Contracts\EventAnalyticsServiceInterface;
 use Modules\Events\Contracts\EventServiceInterface;
 use Modules\Events\Contracts\EventSpaceServiceInterface;
 use Modules\Staff\Contracts\StaffAnalyticsServiceInterface;
+use Modules\Staff\Models\LeaveRequest;
 
 class DashboardController extends Controller
 {
@@ -34,6 +35,7 @@ class DashboardController extends Controller
         return match ($user->role) {
             'superadmin', 'admin' => $this->adminDashboard($user),
             'staff' => $this->staffDashboard($user),
+            'head_of_department' => $this->headDashboard($user),
             default => abort(403, 'Unauthorized'),
         };
     }
@@ -70,6 +72,13 @@ class DashboardController extends Controller
         // Pending Actions (using service)
         $pendingActions = $this->eventAnalytics->getPendingActions();
 
+        // Leave Requests Data
+        $pendingLeaveRequests = LeaveRequest::pending()->count();
+        $recentLeaveRequests = LeaveRequest::with(['staff.user'])
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+
         // Bookings Trend for Graph (last 6 months)
         $bookingsTrend = $this->calculateBookingsTrend();
 
@@ -104,6 +113,8 @@ class DashboardController extends Controller
             'pendingActions' => $pendingActions,
             'bookingsTrend' => $bookingsTrend,
             'calendarEvents' => $calendarEvents,
+            'pendingLeaveRequests' => $pendingLeaveRequests,
+            'recentLeaveRequests' => $recentLeaveRequests,
         ]);
     }
 
@@ -151,6 +162,19 @@ class DashboardController extends Controller
             'change' => abs($change),
             'changeType' => $changeType,
         ];
+    }
+
+    /**
+     * Head of Department Dashboard
+     */
+    protected function headDashboard(User $user): Response
+    {
+        // For now, heads see a simple dashboard
+        // In Sprint 3, this will show pending leave requests for their department
+        return Inertia::render('Dashboard', [
+            'role' => 'head_of_department',
+            'stats' => [],
+        ]);
     }
 
     /**
@@ -212,6 +236,30 @@ class DashboardController extends Controller
             ->where('status', '!=', 'cancelled')
             ->get();
 
+        // Leave Balance Data
+        $leaveBalances = [
+            'annual' => [
+                'total' => $staff->annual_leave_total,
+                'used' => $staff->annual_leave_used,
+                'remaining' => $staff->annual_leave_remaining,
+            ],
+            'sick' => [
+                'total' => $staff->sick_leave_total,
+                'used' => $staff->sick_leave_used,
+                'remaining' => $staff->sick_leave_remaining,
+            ],
+            'emergency' => [
+                'total' => $staff->emergency_leave_total,
+                'used' => $staff->emergency_leave_used,
+                'remaining' => $staff->emergency_leave_remaining,
+            ],
+        ];
+
+        // Leave Requests Data
+        $pendingLeaveRequests = LeaveRequest::where('staff_id', $staff->id)
+            ->pending()
+            ->count();
+
         return Inertia::render('Dashboard', [
             'role' => 'staff',
             'staff' => $staff->load('user'),
@@ -220,6 +268,8 @@ class DashboardController extends Controller
             'upcomingAssignments' => $upcomingAssignments,
             'weekSchedule' => $weekSchedule,
             'todayEvents' => $todayEvents,
+            'leaveBalances' => $leaveBalances,
+            'pendingLeaveRequests' => $pendingLeaveRequests,
         ]);
     }
 }

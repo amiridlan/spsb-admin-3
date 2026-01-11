@@ -23,8 +23,15 @@ interface User {
     email: string;
 }
 
+interface Department {
+    id: number;
+    name: string;
+    code: string | null;
+}
+
 interface Props {
     availableUsers: User[];
+    departments: Department[];
 }
 
 const props = defineProps<Props>();
@@ -37,6 +44,7 @@ const breadcrumbs = [
 
 const form = useForm({
     user_id: null as number | null,
+    department_id: null as number | null,
     position: '',
     specializations: [] as string[],
     is_available: 'true', // Store as string in form
@@ -109,6 +117,25 @@ const submit = () => {
                                 </SelectContent>
                             </Select>
                             <InputError :message="form.errors.user_id" />
+                        </div>
+
+                        <div class="grid gap-2">
+                            <Label for="department_id">Department</Label>
+                            <Select v-model="form.department_id">
+                                <SelectTrigger id="department_id">
+                                    <SelectValue placeholder="Select department (optional)" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem
+                                        v-for="department in departments"
+                                        :key="department.id"
+                                        :value="department.id.toString()"
+                                    >
+                                        {{ department.name }}{{ department.code ? ` (${department.code})` : '' }}
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <InputError :message="form.errors.department_id" />
                         </div>
 
                         <div class="grid gap-2">

@@ -82,7 +82,7 @@ const submit = () => {
         _remove_image: removeCurrentImage.value,
     };
 
-    form.transform(() => formData).post(`/admin/event-spaces/${props.space.id}`, {
+    form.transform(() => formData).put(`/admin/event-spaces/${props.space.id}`, {
         preserveScroll: true,
         forceFormData: true, // Force multipart/form-data for file upload
         onSuccess: () => {

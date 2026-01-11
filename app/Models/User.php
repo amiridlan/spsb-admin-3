@@ -52,6 +52,11 @@ class User extends Authenticatable
         return $this->role === 'staff';
     }
 
+    public function isHeadOfDepartment(): bool
+    {
+        return $this->role === 'head_of_department';
+    }
+
     public function canManageUsers(): bool
     {
         return in_array($this->role, ['superadmin', 'admin']);
@@ -67,5 +72,11 @@ class User extends Authenticatable
     public function hasStaffProfile(): bool
     {
         return $this->staffProfile()->exists();
+    }
+
+    // Department where this user is the head
+    public function headOfDepartment(): HasOne
+    {
+        return $this->hasOne(Department::class, 'head_user_id');
     }
 }

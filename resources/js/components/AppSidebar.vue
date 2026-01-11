@@ -13,7 +13,7 @@ import {
 import { dashboard } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, LayoutGrid, Users, Building2, Calendar, UserCog, ChartColumnIncreasingIcon, Calendar1Icon, BriefcaseBusinessIcon } from 'lucide-vue-next';
+import { BookOpen, LayoutGrid, Users, Building2, Calendar, UserCog, ChartColumnIncreasingIcon, Calendar1Icon, BriefcaseBusinessIcon, CalendarClock, Building } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 
@@ -54,11 +54,29 @@ const mainNavItems = computed<NavItem[]>(() => {
 
      // Staff menu items (for staff)
     if (user && ['staff'].includes(user.role)) {
-        items.push({
-            title: 'My Assignments',
-            href: '/staff/assignments',
-            icon: BriefcaseBusinessIcon,
-        });
+        items.push(
+            {
+                title: 'My Assignments',
+                href: '/staff/assignments',
+                icon: BriefcaseBusinessIcon,
+            },
+            {
+                title: 'Leave Requests',
+                href: '/staff/leave/requests',
+                icon: CalendarClock,
+            }
+        );
+    }
+
+    // Head of Department menu items
+    if (user && user.role === 'head_of_department') {
+        items.push(
+            {
+                title: 'Leave Approvals',
+                href: '/head/leave/requests',
+                icon: CalendarClock,
+            }
+        );
     }
 
     return items;
@@ -95,9 +113,24 @@ const hrmsItems = computed<NavItem[]>(() => {
     if (user && (user.role === 'superadmin' || user.role === 'admin')) {
         items.push(
             {
+                title: 'Departments',
+                href: '/admin/departments',
+                icon: Building,
+            },
+            {
                 title: 'Staff',
                 href: '/admin/staff',
                 icon: UserCog,
+            },
+            {
+                title: 'HR Review',
+                href: '/admin/leave/hr/pending',
+                icon: CalendarClock,
+            },
+            {
+                title: 'Leave Requests',
+                href: '/admin/leave/requests',
+                icon: CalendarClock,
             },
             {
                 title: 'Users',

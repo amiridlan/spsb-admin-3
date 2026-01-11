@@ -23,9 +23,17 @@ interface User {
     email: string;
 }
 
+interface Department {
+    id: number;
+    name: string;
+    code: string | null;
+}
+
 interface Staff {
     id: number;
     user: User;
+    department_id: number | null;
+    department?: Department | null;
     position: string | null;
     specializations: string[] | null;
     is_available: boolean;
@@ -34,6 +42,7 @@ interface Staff {
 
 interface Props {
     staff: Staff;
+    departments: Department[];
 }
 
 const props = defineProps<Props>();
@@ -45,6 +54,7 @@ const breadcrumbs = [
 ];
 
 const form = useForm({
+    department_id: props.staff.department_id?.toString() || null,
     position: props.staff.position || '',
     specializations: props.staff.specializations || [],
     is_available: props.staff.is_available ? 'true' : 'false', // Convert boolean to string
@@ -103,6 +113,25 @@ const submit = () => {
                                 <p class="font-medium">{{ staff.user.name }}</p>
                                 <p class="text-sm text-muted-foreground">{{ staff.user.email }}</p>
                             </div>
+                        </div>
+
+                        <div class="grid gap-2">
+                            <Label for="department_id">Department</Label>
+                            <Select v-model="form.department_id">
+                                <SelectTrigger id="department_id">
+                                    <SelectValue placeholder="Select department (optional)" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem
+                                        v-for="department in departments"
+                                        :key="department.id"
+                                        :value="department.id.toString()"
+                                    >
+                                        {{ department.name }}{{ department.code ? ` (${department.code})` : '' }}
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <InputError :message="form.errors.department_id" />
                         </div>
 
                         <div class="grid gap-2">

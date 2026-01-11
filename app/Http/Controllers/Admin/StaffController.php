@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Department;
 use App\Models\Staff;
 use App\Models\User;
 use App\Services\StaffAvailabilityService;
@@ -19,7 +20,7 @@ class StaffController extends Controller
 
     public function index(): Response
     {
-        $staff = Staff::with('user')
+        $staff = Staff::with(['user', 'department'])
             ->withCount('events')
             ->latest()
             ->paginate(20);
@@ -37,8 +38,14 @@ class StaffController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'email']);
 
+        // Get active departments
+        $departments = Department::active()
+            ->orderBy('name')
+            ->get(['id', 'name', 'code']);
+
         return Inertia::render('admin/staff/Create', [
             'availableUsers' => $availableUsers,
+            'departments' => $departments,
         ]);
     }
 
@@ -46,6 +53,7 @@ class StaffController extends Controller
     {
         $validated = $request->validate([
             'user_id' => ['required', 'exists:users,id', 'unique:staff,user_id'],
+            'department_id' => ['nullable', 'exists:departments,id'],
             'position' => ['nullable', 'string', 'max:255'],
             'specializations' => ['nullable', 'array'],
             'specializations.*' => ['string', 'max:100'],
@@ -63,7 +71,7 @@ class StaffController extends Controller
 
     public function show(Staff $staff): Response
     {
-        $staff->load(['user', 'events.eventSpace']);
+        $staff->load(['user', 'department', 'events.eventSpace']);
 
         return Inertia::render('admin/staff/Show', [
             'staff' => $staff,
@@ -74,16 +82,23 @@ class StaffController extends Controller
 
     public function edit(Staff $staff): Response
     {
-        $staff->load('user');
+        $staff->load(['user', 'department']);
+
+        // Get active departments
+        $departments = Department::active()
+            ->orderBy('name')
+            ->get(['id', 'name', 'code']);
 
         return Inertia::render('admin/staff/Edit', [
             'staff' => $staff,
+            'departments' => $departments,
         ]);
     }
 
     public function update(Request $request, Staff $staff): RedirectResponse
     {
         $validated = $request->validate([
+            'department_id' => ['nullable', 'exists:departments,id'],
             'position' => ['nullable', 'string', 'max:255'],
             'specializations' => ['nullable', 'array'],
             'specializations.*' => ['string', 'max:100'],
@@ -103,5 +118,46 @@ class StaffController extends Controller
 
         return redirect()->route('admin.staff.index')
             ->with('success', 'Staff member removed successfully.');
+    }
+
+    public function adjustLeave(Request $request, Staff $staff): RedirectResponse
+    {
+        $validated = $request->validate([
+            'annual_leave_total' => ['required', 'integer', 'min:0'],
+            'annual_leave_used' => ['required', 'integer', 'min:0'],
+            'sick_leave_total' => ['required', 'integer', 'min:0'],
+            'sick_leave_used' => ['required', 'integer', 'min:0'],
+            'emergency_leave_total' => ['required', 'integer', 'min:0'],
+            'emergency_leave_used' => ['required', 'integer', 'min:0'],
+            'leave_notes' => ['nullable', 'string'],
+        ]);
+
+        // Validate that used doesn't exceed total for each leave type
+        if ($validated['annual_leave_used'] > $validated['annual_leave_total']) {
+            return back()->withErrors(['annual_leave_used' => 'Annual leave used cannot exceed total.']);
+        }
+
+        if ($validated['sick_leave_used'] > $validated['sick_leave_total']) {
+            return back()->withErrors(['sick_leave_used' => 'Sick leave used cannot exceed total.']);
+        }
+
+        if ($validated['emergency_leave_used'] > $validated['emergency_leave_total']) {
+            return back()->withErrors(['emergency_leave_used' => 'Emergency leave used cannot exceed total.']);
+        }
+
+        $staff->update($validated);
+
+        return back()->with('success', 'Leave balance updated successfully.');
+    }
+
+    public function updateLeaveNotes(Request $request, Staff $staff): RedirectResponse
+    {
+        $validated = $request->validate([
+            'leave_notes' => ['nullable', 'string'],
+        ]);
+
+        $staff->update($validated);
+
+        return back()->with('success', 'Leave notes updated successfully.');
     }
 }

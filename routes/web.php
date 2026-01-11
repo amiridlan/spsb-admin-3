@@ -1,13 +1,17 @@
 <?php
 
+use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\EventSpaceController;
 use App\Http\Controllers\Admin\EventStaffController;
+use App\Http\Controllers\Admin\LeaveRequestController as AdminLeaveRequestController;
 use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Head\LeaveRequestController as HeadLeaveRequestController;
 use App\Http\Controllers\Staff\AssignmentController;
+use App\Http\Controllers\Staff\LeaveRequestController as StaffLeaveRequestController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -26,9 +30,38 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Admin routes
     Route::middleware(['role:superadmin,admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::resource('users', UserController::class);
+        Route::resource('departments', DepartmentController::class);
         Route::resource('event-spaces', EventSpaceController::class);
         Route::resource('events', EventController::class);
         Route::resource('staff', StaffController::class);
+
+        // Staff leave management
+        Route::post('staff/{staff}/adjust-leave', [StaffController::class, 'adjustLeave'])
+            ->name('staff.adjust-leave');
+        Route::patch('staff/{staff}/leave-notes', [StaffController::class, 'updateLeaveNotes'])
+            ->name('staff.leave-notes');
+
+        // Leave request management
+        Route::prefix('leave')->name('leave.')->group(function () {
+            Route::get('requests', [AdminLeaveRequestController::class, 'index'])
+                ->name('requests.index');
+            Route::get('requests/{id}', [AdminLeaveRequestController::class, 'show'])
+                ->name('requests.show');
+            Route::post('requests/{id}/approve', [AdminLeaveRequestController::class, 'approve'])
+                ->name('requests.approve');
+            Route::post('requests/{id}/reject', [AdminLeaveRequestController::class, 'reject'])
+                ->name('requests.reject');
+
+            // HR approval routes (first step in multi-level approval)
+            Route::prefix('hr')->name('hr.')->group(function () {
+                Route::get('pending', [AdminLeaveRequestController::class, 'hrIndex'])
+                    ->name('pending');
+                Route::post('{id}/approve', [AdminLeaveRequestController::class, 'hrApprove'])
+                    ->name('approve');
+                Route::post('{id}/reject', [AdminLeaveRequestController::class, 'hrReject'])
+                    ->name('reject');
+            });
+        });
 
         // Metrics and statistics
         Route::get('metrics', [\App\Http\Controllers\Admin\MetricsController::class, 'index'])
@@ -69,14 +102,44 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('events.staff.destroy');
     });
 
-    // Staff routes (for staff role users)
-    Route::middleware(['role:staff,admin,superadmin'])->prefix('staff')->name('staff.')->group(function () {
+    // Staff routes (for staff role users and heads of department with staff profiles)
+    Route::middleware(['role:staff,head_of_department,admin,superadmin'])->prefix('staff')->name('staff.')->group(function () {
         Route::get('assignments', [AssignmentController::class, 'index'])
             ->name('assignments.index');
         Route::get('assignments/calendar', [AssignmentController::class, 'calendar'])
             ->name('assignments.calendar');
         Route::get('assignments/{event}', [AssignmentController::class, 'show'])
             ->name('assignments.show');
+
+        // Leave request routes
+        Route::prefix('leave')->name('leave.')->group(function () {
+            Route::get('requests', [StaffLeaveRequestController::class, 'index'])
+                ->name('requests.index');
+            Route::get('requests/create', [StaffLeaveRequestController::class, 'create'])
+                ->name('requests.create');
+            Route::post('requests', [StaffLeaveRequestController::class, 'store'])
+                ->name('requests.store');
+            Route::get('requests/{id}', [StaffLeaveRequestController::class, 'show'])
+                ->name('requests.show');
+            Route::post('requests/{id}/cancel', [StaffLeaveRequestController::class, 'cancel'])
+                ->name('requests.cancel');
+            Route::get('balance', [StaffLeaveRequestController::class, 'balance'])
+                ->name('balance');
+        });
+    });
+
+    // Department Head routes (for leave approval)
+    Route::middleware(['role:head_of_department'])->prefix('head')->name('head.')->group(function () {
+        Route::prefix('leave')->name('leave.')->group(function () {
+            Route::get('requests', [HeadLeaveRequestController::class, 'index'])
+                ->name('requests.index');
+            Route::get('requests/{id}', [HeadLeaveRequestController::class, 'show'])
+                ->name('requests.show');
+            Route::post('requests/{id}/approve', [HeadLeaveRequestController::class, 'approve'])
+                ->name('requests.approve');
+            Route::post('requests/{id}/reject', [HeadLeaveRequestController::class, 'reject'])
+                ->name('requests.reject');
+        });
     });
 });
 

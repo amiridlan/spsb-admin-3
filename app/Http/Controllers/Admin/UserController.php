@@ -18,7 +18,7 @@ class UserController extends Controller
     {
         $users = User::query()
             ->when(!auth()->user()->isSuperAdmin(), function ($query) {
-                $query->whereIn('role', ['admin', 'staff']);
+                $query->whereIn('role', ['admin', 'head_of_department', 'staff']);
             })
             ->orderBy('created_at', 'desc')
             ->paginate(20);
@@ -37,8 +37,8 @@ class UserController extends Controller
     public function create(): Response
     {
         $roles = auth()->user()->isSuperAdmin()
-            ? ['superadmin', 'admin', 'staff']
-            : ['admin', 'staff'];
+            ? ['superadmin', 'admin', 'head_of_department', 'staff']
+            : ['admin', 'head_of_department', 'staff'];
 
         return Inertia::render('admin/users/Create', [
             'roles' => $roles,
@@ -71,8 +71,8 @@ class UserController extends Controller
         $this->authorize('update', $user);
 
         $roles = auth()->user()->isSuperAdmin()
-            ? ['superadmin', 'admin', 'staff']
-            : ['admin', 'staff'];
+            ? ['superadmin', 'admin', 'head_of_department', 'staff']
+            : ['admin', 'head_of_department', 'staff'];
 
         return Inertia::render('admin/users/Edit', [
             'user' => $user,
@@ -97,7 +97,7 @@ class UserController extends Controller
             'role' => $validated['role'],
         ]);
 
-        if ($validated['password']) {
+        if (!empty($validated['password'])) {
             $user->update(['password' => Hash::make($validated['password'])]);
         }
 
@@ -122,7 +122,7 @@ class UserController extends Controller
     private function getAllowedRoles(): array
     {
         return auth()->user()->isSuperAdmin()
-            ? ['superadmin', 'admin', 'staff']
-            : ['admin', 'staff'];
+            ? ['superadmin', 'admin', 'head_of_department', 'staff']
+            : ['admin', 'head_of_department', 'staff'];
     }
 }

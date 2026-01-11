@@ -10,14 +10,31 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { Head, Link } from '@inertiajs/vue3';
-import { ArrowLeft, Pencil, User, Mail, Calendar } from 'lucide-vue-next';
-import { computed } from 'vue';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Head, Link, useForm } from '@inertiajs/vue3';
+import { ArrowLeft, Pencil, User, Mail, Calendar, Settings } from 'lucide-vue-next';
+import { computed, ref } from 'vue';
 
 interface User {
     id: number;
     name: string;
     email: string;
+}
+
+interface Department {
+    id: number;
+    name: string;
+    code: string | null;
 }
 
 interface EventSpace {
@@ -43,10 +60,21 @@ interface Assignment {
 interface Staff {
     id: number;
     user: User;
+    department?: Department | null;
     position: string | null;
     specializations: string[] | null;
     is_available: boolean;
     notes: string | null;
+    annual_leave_total: number;
+    annual_leave_used: number;
+    annual_leave_remaining: number;
+    sick_leave_total: number;
+    sick_leave_used: number;
+    sick_leave_remaining: number;
+    emergency_leave_total: number;
+    emergency_leave_used: number;
+    emergency_leave_remaining: number;
+    leave_notes: string | null;
     created_at: string;
 }
 
@@ -77,6 +105,27 @@ const breadcrumbs = computed(() => [
     { title: 'Staff', href: '/admin/staff' },
     { title: props.staff.user.name, href: `/admin/staff/${props.staff.id}` },
 ]);
+
+const isAdjustLeaveOpen = ref(false);
+
+const leaveForm = useForm({
+    annual_leave_total: props.staff.annual_leave_total,
+    annual_leave_used: props.staff.annual_leave_used,
+    sick_leave_total: props.staff.sick_leave_total,
+    sick_leave_used: props.staff.sick_leave_used,
+    emergency_leave_total: props.staff.emergency_leave_total,
+    emergency_leave_used: props.staff.emergency_leave_used,
+    leave_notes: props.staff.leave_notes || '',
+});
+
+const submitLeaveAdjustment = () => {
+    leaveForm.post(`/admin/staff/${props.staff.id}/adjust-leave`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            isAdjustLeaveOpen.value = false;
+        },
+    });
+};
 </script>
 
 <template>
@@ -137,6 +186,15 @@ const breadcrumbs = computed(() => [
                             </div>
                         </div>
 
+                        <div v-if="staff.department">
+                            <p class="text-sm font-medium">Department</p>
+                            <div class="mt-1">
+                                <Badge variant="outline">
+                                    {{ staff.department.name }}{{ staff.department.code ? ` (${staff.department.code})` : '' }}
+                                </Badge>
+                            </div>
+                        </div>
+
                         <div v-if="staff.position">
                             <p class="text-sm font-medium">Position</p>
                             <p class="text-sm text-muted-foreground">
@@ -164,6 +222,76 @@ const breadcrumbs = computed(() => [
                     <p class="text-sm text-muted-foreground whitespace-pre-wrap">
                         {{ staff.notes }}
                     </p>
+                </div>
+            </div>
+
+            <!-- Leave Balance -->
+            <div class="space-y-4 rounded-lg border p-6">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold">Leave Balance</h3>
+                    <Button variant="outline" size="sm" @click="isAdjustLeaveOpen = true">
+                        <Settings class="mr-2 h-4 w-4" />
+                        Adjust Leave
+                    </Button>
+                </div>
+
+                <div class="space-y-4">
+                    <!-- Annual Leave -->
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-medium">Annual Leave</span>
+                            <span class="text-sm text-muted-foreground">
+                                {{ staff.annual_leave_used }} / {{ staff.annual_leave_total }} used
+                                ({{ staff.annual_leave_remaining }} remaining)
+                            </span>
+                        </div>
+                        <div class="h-2 w-full overflow-hidden rounded-full bg-secondary">
+                            <div
+                                class="h-full bg-primary transition-all"
+                                :style="{ width: `${(staff.annual_leave_used / staff.annual_leave_total) * 100}%` }"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Sick Leave -->
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-medium">Sick Leave</span>
+                            <span class="text-sm text-muted-foreground">
+                                {{ staff.sick_leave_used }} / {{ staff.sick_leave_total }} used
+                                ({{ staff.sick_leave_remaining }} remaining)
+                            </span>
+                        </div>
+                        <div class="h-2 w-full overflow-hidden rounded-full bg-secondary">
+                            <div
+                                class="h-full bg-red-500 transition-all"
+                                :style="{ width: `${(staff.sick_leave_used / staff.sick_leave_total) * 100}%` }"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Emergency Leave -->
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-medium">Emergency Leave</span>
+                            <span class="text-sm text-muted-foreground">
+                                {{ staff.emergency_leave_used }} / {{ staff.emergency_leave_total }} used
+                                ({{ staff.emergency_leave_remaining }} remaining)
+                            </span>
+                        </div>
+                        <div class="h-2 w-full overflow-hidden rounded-full bg-secondary">
+                            <div
+                                class="h-full bg-orange-500 transition-all"
+                                :style="{ width: `${(staff.emergency_leave_used / staff.emergency_leave_total) * 100}%` }"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Leave Notes (if exists) -->
+                    <div v-if="staff.leave_notes" class="mt-4 rounded-lg bg-muted p-3">
+                        <p class="text-xs font-medium text-muted-foreground mb-1">Admin Notes:</p>
+                        <p class="text-sm whitespace-pre-wrap">{{ staff.leave_notes }}</p>
+                    </div>
                 </div>
             </div>
 
@@ -270,5 +398,141 @@ const breadcrumbs = computed(() => [
                 </div>
             </div>
         </div>
+
+        <!-- Leave Adjustment Modal -->
+        <Dialog v-model:open="isAdjustLeaveOpen">
+            <DialogContent class="max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>Adjust Leave for {{ staff.user.name }}</DialogTitle>
+                    <DialogDescription>
+                        Update leave balances and notes for this staff member.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <form @submit.prevent="submitLeaveAdjustment" class="space-y-6">
+                    <!-- Annual Leave -->
+                    <div class="space-y-4 rounded-lg border p-4">
+                        <h4 class="font-medium">Annual Leave</h4>
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <div class="space-y-2">
+                                <Label for="annual_total">Total Days</Label>
+                                <Input
+                                    id="annual_total"
+                                    v-model.number="leaveForm.annual_leave_total"
+                                    type="number"
+                                    min="0"
+                                    required
+                                />
+                            </div>
+                            <div class="space-y-2">
+                                <Label for="annual_used">Used Days</Label>
+                                <Input
+                                    id="annual_used"
+                                    v-model.number="leaveForm.annual_leave_used"
+                                    type="number"
+                                    min="0"
+                                    required
+                                />
+                                <p v-if="leaveForm.errors.annual_leave_used" class="text-sm text-destructive">
+                                    {{ leaveForm.errors.annual_leave_used }}
+                                </p>
+                            </div>
+                        </div>
+                        <p class="text-sm text-muted-foreground">
+                            Remaining: {{ Math.max(0, leaveForm.annual_leave_total - leaveForm.annual_leave_used) }} days
+                        </p>
+                    </div>
+
+                    <!-- Sick Leave -->
+                    <div class="space-y-4 rounded-lg border p-4">
+                        <h4 class="font-medium">Sick Leave</h4>
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <div class="space-y-2">
+                                <Label for="sick_total">Total Days</Label>
+                                <Input
+                                    id="sick_total"
+                                    v-model.number="leaveForm.sick_leave_total"
+                                    type="number"
+                                    min="0"
+                                    required
+                                />
+                            </div>
+                            <div class="space-y-2">
+                                <Label for="sick_used">Used Days</Label>
+                                <Input
+                                    id="sick_used"
+                                    v-model.number="leaveForm.sick_leave_used"
+                                    type="number"
+                                    min="0"
+                                    required
+                                />
+                                <p v-if="leaveForm.errors.sick_leave_used" class="text-sm text-destructive">
+                                    {{ leaveForm.errors.sick_leave_used }}
+                                </p>
+                            </div>
+                        </div>
+                        <p class="text-sm text-muted-foreground">
+                            Remaining: {{ Math.max(0, leaveForm.sick_leave_total - leaveForm.sick_leave_used) }} days
+                        </p>
+                    </div>
+
+                    <!-- Emergency Leave -->
+                    <div class="space-y-4 rounded-lg border p-4">
+                        <h4 class="font-medium">Emergency Leave</h4>
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <div class="space-y-2">
+                                <Label for="emergency_total">Total Days</Label>
+                                <Input
+                                    id="emergency_total"
+                                    v-model.number="leaveForm.emergency_leave_total"
+                                    type="number"
+                                    min="0"
+                                    required
+                                />
+                            </div>
+                            <div class="space-y-2">
+                                <Label for="emergency_used">Used Days</Label>
+                                <Input
+                                    id="emergency_used"
+                                    v-model.number="leaveForm.emergency_leave_used"
+                                    type="number"
+                                    min="0"
+                                    required
+                                />
+                                <p v-if="leaveForm.errors.emergency_leave_used" class="text-sm text-destructive">
+                                    {{ leaveForm.errors.emergency_leave_used }}
+                                </p>
+                            </div>
+                        </div>
+                        <p class="text-sm text-muted-foreground">
+                            Remaining: {{ Math.max(0, leaveForm.emergency_leave_total - leaveForm.emergency_leave_used) }} days
+                        </p>
+                    </div>
+
+                    <!-- Leave Notes -->
+                    <div class="space-y-2">
+                        <Label for="leave_notes">Admin Notes</Label>
+                        <Textarea
+                            id="leave_notes"
+                            v-model="leaveForm.leave_notes"
+                            rows="3"
+                            placeholder="Add notes about leave adjustments, special circumstances, etc."
+                        />
+                        <p v-if="leaveForm.errors.leave_notes" class="text-sm text-destructive">
+                            {{ leaveForm.errors.leave_notes }}
+                        </p>
+                    </div>
+
+                    <DialogFooter>
+                        <Button type="button" variant="outline" @click="isAdjustLeaveOpen = false">
+                            Cancel
+                        </Button>
+                        <Button type="submit" :disabled="leaveForm.processing">
+                            Save Changes
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
     </AppLayout>
 </template>

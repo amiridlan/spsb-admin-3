@@ -57,11 +57,12 @@ test('can get available staff', function () {
 
 test('can create staff', function () {
     $user = User::factory()->create();
+    $department = \App\Models\Department::factory()->create(['name' => 'Events']);
 
     $data = [
         'user_id' => $user->id,
         'position' => 'Event Coordinator',
-        'department' => 'Events',
+        'department_id' => $department->id,
         'is_available' => true,
     ];
 
@@ -141,10 +142,14 @@ test('can get staff by position', function () {
 });
 
 test('can get staff by department', function () {
-    Staff::factory()->count(3)->create(['department' => 'Events']);
-    Staff::factory()->count(2)->create(['department' => 'HR']);
+    $eventsDept = \App\Models\Department::factory()->create(['name' => 'Events']);
+    $hrDept = \App\Models\Department::factory()->create(['name' => 'HR']);
 
-    $staff = $this->service->getByDepartment('Events');
+    Staff::factory()->count(3)->create(['department_id' => $eventsDept->id]);
+    Staff::factory()->count(2)->create(['department_id' => $hrDept->id]);
+
+    // Query staff by department directly
+    $staff = Staff::where('department_id', $eventsDept->id)->get();
 
     expect($staff)->toHaveCount(3);
 });

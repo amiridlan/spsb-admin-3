@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('event_spaces', function (Blueprint $table) {
-            $table->string('image')->nullable()->after('id');
+            $table->string('image')->nullable()->after('is_active');
         });
     }
 
