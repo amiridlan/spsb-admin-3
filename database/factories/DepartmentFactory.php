@@ -28,15 +28,7 @@ class DepartmentFactory extends Factory
             'code' => $department['code'] . fake()->numberBetween(1, 100),
             'description' => fake()->sentence(),
             'head_user_id' => null,
-            'is_active' => true,
         ];
-    }
-
-    public function inactive(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'is_active' => false,
-        ]);
     }
 
     public function withHead(int $userId): static

@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
     Select,
     SelectContent,
@@ -30,7 +29,7 @@ interface Props {
 
 defineProps<Props>();
 
-const isActive = ref(true);
+const selectedHead = ref<string | null>(null);
 
 const breadcrumbs = [
     { title: 'Dashboard', href: '/dashboard' },
@@ -105,12 +104,11 @@ const breadcrumbs = [
 
                         <div class="grid gap-2">
                             <Label for="head_user_id">Department Head</Label>
-                            <Select name="head_user_id">
+                            <Select v-model="selectedHead">
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select department head (optional)" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem :value="null">None</SelectItem>
                                     <SelectItem
                                         v-for="user in potentialHeads"
                                         :key="user.id"
@@ -120,22 +118,11 @@ const breadcrumbs = [
                                     </SelectItem>
                                 </SelectContent>
                             </Select>
+                            <input type="hidden" name="head_user_id" :value="selectedHead || ''" />
                             <p class="text-xs text-muted-foreground">
                                 User who will be the head of this department
                             </p>
                             <InputError :message="errors.head_user_id" />
-                        </div>
-
-                        <div class="flex items-center space-x-2">
-                            <Checkbox
-                                id="is_active"
-                                name="is_active"
-                                :checked="isActive"
-                                @update:checked="(value) => isActive = value"
-                            />
-                            <Label for="is_active" class="cursor-pointer">
-                                Active
-                            </Label>
                         </div>
                     </div>
 

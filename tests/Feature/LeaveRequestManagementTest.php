@@ -26,8 +26,8 @@ test('staff can view their leave requests', function () {
     LeaveRequest::create([
         'staff_id' => $this->staff->id,
         'leave_type' => 'annual',
-        'start_date' => '2026-01-10',
-        'end_date' => '2026-01-12',
+        'start_date' => '2026-01-20',
+        'end_date' => '2026-01-22',
         'total_days' => 3,
         'reason' => 'Vacation',
         'status' => 'pending',
@@ -55,8 +55,8 @@ test('staff can view leave request create form', function () {
 test('staff can submit leave request', function () {
     $data = [
         'leave_type' => 'annual',
-        'start_date' => '2026-01-10',
-        'end_date' => '2026-01-12',
+        'start_date' => '2026-01-20',
+        'end_date' => '2026-01-22',
         'reason' => 'Need time off for personal matters which requires at least ten characters',
     ];
 
@@ -76,8 +76,8 @@ test('staff can submit leave request', function () {
 test('staff cannot submit leave request with insufficient balance', function () {
     $data = [
         'leave_type' => 'annual',
-        'start_date' => '2026-01-10',
-        'end_date' => '2026-01-25', // 16 days, but only 10 remaining
+        'start_date' => '2026-01-20',
+        'end_date' => '2026-02-05', // 17 days, but only 10 remaining
         'reason' => 'Need extended time off for personal reasons',
     ];
 
@@ -87,15 +87,15 @@ test('staff cannot submit leave request with insufficient balance', function () 
 
     $this->assertDatabaseMissing('leave_requests', [
         'staff_id' => $this->staff->id,
-        'start_date' => '2026-01-10',
+        'start_date' => '2026-01-20',
     ]);
 });
 
 test('staff cannot submit leave request with invalid data', function () {
     $data = [
         'leave_type' => 'annual',
-        'start_date' => '2026-01-10',
-        'end_date' => '2026-01-12',
+        'start_date' => '2026-01-20',
+        'end_date' => '2026-01-22',
         'reason' => 'Short', // Too short
     ];
 
@@ -108,8 +108,8 @@ test('staff can view their leave request details', function () {
     $request = LeaveRequest::create([
         'staff_id' => $this->staff->id,
         'leave_type' => 'annual',
-        'start_date' => '2026-01-10',
-        'end_date' => '2026-01-12',
+        'start_date' => '2026-01-20',
+        'end_date' => '2026-01-22',
         'total_days' => 3,
         'reason' => 'Vacation',
         'status' => 'pending',
@@ -129,8 +129,8 @@ test('staff cannot view other staff leave request', function () {
     $request = LeaveRequest::create([
         'staff_id' => $otherStaff->id,
         'leave_type' => 'annual',
-        'start_date' => '2026-01-10',
-        'end_date' => '2026-01-12',
+        'start_date' => '2026-01-20',
+        'end_date' => '2026-01-22',
         'total_days' => 3,
         'reason' => 'Vacation',
         'status' => 'pending',
@@ -145,8 +145,8 @@ test('staff can cancel their pending leave request', function () {
     $request = LeaveRequest::create([
         'staff_id' => $this->staff->id,
         'leave_type' => 'annual',
-        'start_date' => '2026-01-10',
-        'end_date' => '2026-01-12',
+        'start_date' => '2026-01-20',
+        'end_date' => '2026-01-22',
         'total_days' => 3,
         'reason' => 'Vacation',
         'status' => 'pending',
@@ -191,8 +191,8 @@ test('admin can view all leave requests', function () {
     LeaveRequest::create([
         'staff_id' => $this->staff->id,
         'leave_type' => 'annual',
-        'start_date' => '2026-01-10',
-        'end_date' => '2026-01-12',
+        'start_date' => '2026-01-20',
+        'end_date' => '2026-01-22',
         'total_days' => 3,
         'reason' => 'Vacation',
         'status' => 'pending',
@@ -201,8 +201,8 @@ test('admin can view all leave requests', function () {
     LeaveRequest::create([
         'staff_id' => $staff2->id,
         'leave_type' => 'sick',
-        'start_date' => '2026-02-10',
-        'end_date' => '2026-02-11',
+        'start_date' => '2026-02-20',
+        'end_date' => '2026-02-21',
         'total_days' => 2,
         'reason' => 'Flu',
         'status' => 'approved',
@@ -222,8 +222,8 @@ test('admin can filter leave requests by status', function () {
     LeaveRequest::create([
         'staff_id' => $this->staff->id,
         'leave_type' => 'annual',
-        'start_date' => '2026-01-10',
-        'end_date' => '2026-01-12',
+        'start_date' => '2026-01-20',
+        'end_date' => '2026-01-22',
         'total_days' => 3,
         'reason' => 'Vacation',
         'status' => 'pending',
@@ -232,8 +232,8 @@ test('admin can filter leave requests by status', function () {
     LeaveRequest::create([
         'staff_id' => $this->staff->id,
         'leave_type' => 'sick',
-        'start_date' => '2026-02-10',
-        'end_date' => '2026-02-11',
+        'start_date' => '2026-02-20',
+        'end_date' => '2026-02-21',
         'total_days' => 2,
         'reason' => 'Flu',
         'status' => 'approved',
@@ -253,8 +253,8 @@ test('admin can view leave request details', function () {
     $request = LeaveRequest::create([
         'staff_id' => $this->staff->id,
         'leave_type' => 'annual',
-        'start_date' => '2026-01-10',
-        'end_date' => '2026-01-12',
+        'start_date' => '2026-01-20',
+        'end_date' => '2026-01-22',
         'total_days' => 3,
         'reason' => 'Vacation',
         'status' => 'pending',
@@ -273,8 +273,8 @@ test('admin can approve pending leave request', function () {
     $request = LeaveRequest::create([
         'staff_id' => $this->staff->id,
         'leave_type' => 'annual',
-        'start_date' => '2026-01-10',
-        'end_date' => '2026-01-12',
+        'start_date' => '2026-01-20',
+        'end_date' => '2026-01-22',
         'total_days' => 3,
         'reason' => 'Vacation',
         'status' => 'pending',
@@ -303,8 +303,8 @@ test('admin can reject pending leave request', function () {
     $request = LeaveRequest::create([
         'staff_id' => $this->staff->id,
         'leave_type' => 'annual',
-        'start_date' => '2026-01-10',
-        'end_date' => '2026-01-12',
+        'start_date' => '2026-01-20',
+        'end_date' => '2026-01-22',
         'total_days' => 3,
         'reason' => 'Vacation',
         'status' => 'pending',
@@ -333,8 +333,8 @@ test('admin cannot reject without reason', function () {
     $request = LeaveRequest::create([
         'staff_id' => $this->staff->id,
         'leave_type' => 'annual',
-        'start_date' => '2026-01-10',
-        'end_date' => '2026-01-12',
+        'start_date' => '2026-01-20',
+        'end_date' => '2026-01-22',
         'total_days' => 3,
         'reason' => 'Vacation',
         'status' => 'pending',
@@ -351,8 +351,8 @@ test('admin cannot approve already approved request', function () {
     $request = LeaveRequest::create([
         'staff_id' => $this->staff->id,
         'leave_type' => 'annual',
-        'start_date' => '2026-01-10',
-        'end_date' => '2026-01-12',
+        'start_date' => '2026-01-20',
+        'end_date' => '2026-01-22',
         'total_days' => 3,
         'reason' => 'Vacation',
         'status' => 'approved',

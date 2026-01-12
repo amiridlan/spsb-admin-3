@@ -66,17 +66,6 @@ test('hasHead returns false when department has no head', function () {
     expect($department->hasHead())->toBeFalse();
 });
 
-test('active scope filters only active departments', function () {
-    Department::factory()->create(['is_active' => true, 'name' => 'Active Dept']);
-    Department::factory()->create(['is_active' => false, 'name' => 'Inactive Dept']);
-    Department::factory()->create(['is_active' => true, 'name' => 'Another Active']);
-
-    $activeDepartments = Department::active()->get();
-
-    expect($activeDepartments)->toHaveCount(2);
-    expect($activeDepartments->every(fn ($dept) => $dept->is_active))->toBeTrue();
-});
-
 test('department can be created with all attributes', function () {
     $head = User::factory()->create(['role' => 'admin']);
 
@@ -85,26 +74,12 @@ test('department can be created with all attributes', function () {
         'code' => 'IT',
         'description' => 'Manages IT infrastructure',
         'head_user_id' => $head->id,
-        'is_active' => true,
     ]);
 
     expect($department->name)->toBe('Information Technology');
     expect($department->code)->toBe('IT');
     expect($department->description)->toBe('Manages IT infrastructure');
     expect($department->head_user_id)->toBe($head->id);
-    expect($department->is_active)->toBeTrue();
-});
-
-test('department is_active is cast to boolean', function () {
-    $department = Department::factory()->create(['is_active' => 1]);
-
-    expect($department->is_active)->toBeTrue();
-    expect($department->is_active)->toBeBool();
-
-    $inactiveDepartment = Department::factory()->create(['is_active' => 0]);
-
-    expect($inactiveDepartment->is_active)->toBeFalse();
-    expect($inactiveDepartment->is_active)->toBeBool();
 });
 
 test('department can be created without optional fields', function () {

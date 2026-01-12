@@ -11,7 +11,6 @@ interface Department {
     code: string | null;
     description: string | null;
     head_user_id: number | null;
-    is_active: boolean;
     head?: {
         id: number;
         name: string;
@@ -77,9 +76,6 @@ const breadcrumbs = [
                                 Staff Count
                             </th>
                             <th class="h-12 px-4 text-left align-middle font-medium">
-                                Status
-                            </th>
-                            <th class="h-12 px-4 text-left align-middle font-medium">
                                 Actions
                             </th>
                         </tr>
@@ -116,11 +112,6 @@ const breadcrumbs = [
                                     <Users class="h-4 w-4 text-muted-foreground" />
                                     <span>{{ department.staff_count || 0 }}</span>
                                 </div>
-                            </td>
-                            <td class="p-4 align-middle">
-                                <Badge :variant="department.is_active ? 'default' : 'secondary'">
-                                    {{ department.is_active ? 'Active' : 'Inactive' }}
-                                </Badge>
                             </td>
                             <td class="p-4 align-middle">
                                 <div class="flex items-center gap-2">

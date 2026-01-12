@@ -17,15 +17,7 @@ class Department extends Model
         'code',
         'description',
         'head_user_id',
-        'is_active',
     ];
-
-    protected function casts(): array
-    {
-        return [
-            'is_active' => 'boolean',
-        ];
-    }
 
     /**
      * Get the staff members in this department
@@ -41,14 +33,6 @@ class Department extends Model
     public function head(): BelongsTo
     {
         return $this->belongsTo(User::class, 'head_user_id');
-    }
-
-    /**
-     * Scope to get only active departments
-     */
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', true);
     }
 
     /**

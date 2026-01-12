@@ -7,8 +7,16 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import AuthBase from '@/layouts/AuthLayout.vue';
 import { login } from '@/routes';
-import { store } from '@/routes/register';
-import { Form, Head } from '@inertiajs/vue3';
+// import { store } from '@/routes/register'; // Route not available - registration may be disabled
+import { Form, Head, router } from '@inertiajs/vue3';
+
+// Placeholder store object since register route doesn't exist
+const store = {
+    form: () => ({
+        action: '/register',
+        method: 'post'
+    })
+};
 </script>
 
 <template>

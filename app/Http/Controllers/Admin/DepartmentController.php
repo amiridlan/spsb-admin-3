@@ -52,7 +52,6 @@ class DepartmentController extends Controller
             'code' => ['nullable', 'string', 'max:10', 'unique:departments,code'],
             'description' => ['nullable', 'string', 'max:1000'],
             'head_user_id' => ['nullable', 'exists:users,id'],
-            'is_active' => ['boolean'],
         ]);
 
         Department::create($validated);
@@ -84,7 +83,6 @@ class DepartmentController extends Controller
             'code' => ['nullable', 'string', 'max:10', Rule::unique('departments')->ignore($department->id)],
             'description' => ['nullable', 'string', 'max:1000'],
             'head_user_id' => ['nullable', 'exists:users,id'],
-            'is_active' => ['boolean'],
         ]);
 
         $department->update($validated);
