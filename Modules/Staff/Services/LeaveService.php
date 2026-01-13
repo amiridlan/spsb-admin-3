@@ -92,51 +92,81 @@ class LeaveService implements LeaveServiceInterface
     }
 
     /**
-     * HR/Admin approves a leave request (first step)
+     * HR/Admin approves a leave request
      */
     public function approveAsHR(int $requestId, int $hrUserId, ?string $notes = null): LeaveRequest
     {
         $request = LeaveRequest::findOrFail($requestId);
 
         if (!$request->isPending()) {
-            throw new \Exception('Only pending leave requests can be approved by HR.');
+            throw new \Exception('Only pending leave requests can be approved.');
         }
 
-        // Update request status to hr_approved
+        if ($request->hasHrReviewed()) {
+            throw new \Exception('This request has already been reviewed by HR.');
+        }
+
+        // Check if Head has already approved
+        $headAlreadyApproved = $request->head_reviewed_by !== null;
+
+        // Set status to approved if Head already approved, otherwise remain pending
+        $newStatus = $headAlreadyApproved ? LeaveRequest::STATUS_APPROVED : LeaveRequest::STATUS_PENDING;
+
+        // Update request
         $request->update([
-            'status' => LeaveRequest::STATUS_HR_APPROVED,
+            'status' => $newStatus,
             'hr_reviewed_by' => $hrUserId,
             'hr_review_notes' => $notes,
             'hr_reviewed_at' => now(),
         ]);
 
-        return $request->load(['staff.user', 'hrReviewer']);
+        // Update staff leave balance ONLY if both approvals are complete
+        if ($newStatus === LeaveRequest::STATUS_APPROVED) {
+            $staff = $request->staff;
+            $field = $request->leave_type . '_leave_used';
+            $staff->$field += $request->total_days;
+            $staff->save();
+        }
+
+        return $request->load(['staff.user', 'hrReviewer', 'headReviewer']);
     }
 
     /**
-     * Department Head approves a leave request (second step - final approval)
+     * Department Head approves a leave request
      */
     public function approveAsHead(int $requestId, int $headUserId, ?string $notes = null): LeaveRequest
     {
         $request = LeaveRequest::findOrFail($requestId);
 
-        if (!$request->isHrApproved()) {
-            throw new \Exception('Leave request must be HR approved before head can approve.');
+        if (!$request->isPending()) {
+            throw new \Exception('Only pending leave requests can be approved.');
         }
 
-        // Update request status to approved
+        if ($request->hasHeadReviewed()) {
+            throw new \Exception('This request has already been reviewed by the department head.');
+        }
+
+        // Check if HR has already approved
+        $hrAlreadyApproved = $request->hr_reviewed_by !== null;
+
+        // Set status to approved if HR already approved, otherwise remain pending
+        $newStatus = $hrAlreadyApproved ? LeaveRequest::STATUS_APPROVED : LeaveRequest::STATUS_PENDING;
+
+        // Update request
         $request->update([
-            'status' => LeaveRequest::STATUS_APPROVED,
+            'status' => $newStatus,
             'head_reviewed_by' => $headUserId,
             'head_review_notes' => $notes,
             'head_reviewed_at' => now(),
         ]);
 
-        // Update staff leave balance (only on final approval)
-        $staff = $request->staff;
-        $field = $request->leave_type . '_leave_used';
-        $staff->$field += $request->total_days;
-        $staff->save();
+        // Update staff leave balance ONLY if both approvals are complete
+        if ($newStatus === LeaveRequest::STATUS_APPROVED) {
+            $staff = $request->staff;
+            $field = $request->leave_type . '_leave_used';
+            $staff->$field += $request->total_days;
+            $staff->save();
+        }
 
         return $request->load(['staff.user', 'hrReviewer', 'headReviewer']);
     }
@@ -149,7 +179,11 @@ class LeaveService implements LeaveServiceInterface
         $request = LeaveRequest::findOrFail($requestId);
 
         if (!$request->isPending()) {
-            throw new \Exception('Only pending leave requests can be rejected by HR.');
+            throw new \Exception('Only pending leave requests can be rejected.');
+        }
+
+        if ($request->hasHrReviewed()) {
+            throw new \Exception('This request has already been reviewed by HR.');
         }
 
         // Update request status to rejected
@@ -160,7 +194,7 @@ class LeaveService implements LeaveServiceInterface
             'hr_reviewed_at' => now(),
         ]);
 
-        return $request->load(['staff.user', 'hrReviewer']);
+        return $request->load(['staff.user', 'hrReviewer', 'headReviewer']);
     }
 
     /**
@@ -170,8 +204,12 @@ class LeaveService implements LeaveServiceInterface
     {
         $request = LeaveRequest::findOrFail($requestId);
 
-        if (!$request->isHrApproved()) {
-            throw new \Exception('Only HR-approved leave requests can be rejected by head.');
+        if (!$request->isPending()) {
+            throw new \Exception('Only pending leave requests can be rejected.');
+        }
+
+        if ($request->hasHeadReviewed()) {
+            throw new \Exception('This request has already been reviewed by the department head.');
         }
 
         // Update request status to rejected
@@ -244,7 +282,7 @@ class LeaveService implements LeaveServiceInterface
 
     public function getLeaveRequestById(int $id): ?LeaveRequest
     {
-        return LeaveRequest::with(['staff.user', 'hrReviewer', 'headReviewer'])->find($id);
+        return LeaveRequest::with(['staff.user', 'staff.department', 'hrReviewer', 'headReviewer'])->find($id);
     }
 
     public function checkLeaveAvailability(int $staffId, string $leaveType, string $startDate, string $endDate): array

@@ -23,28 +23,17 @@ class LeaveRequestController extends Controller
     {
         $user = $request->user();
 
-        // Get head's department
-        if (!$user->hasStaffProfile()) {
-            abort(403, 'You must have a staff profile to access this page.');
-        }
+        // Get the department where this user is the head
+        $department = $user->headOfDepartment;
 
-        $userStaff = $user->staffProfile;
-
-        if (!$userStaff->department_id) {
-            abort(403, 'You must be assigned to a department.');
-        }
-
-        $department = $userStaff->department;
-
-        // Verify user is actually the head of this department
-        if (!$department || $department->head_user_id !== $user->id) {
-            abort(403, 'You are not the head of this department.');
+        if (!$department) {
+            abort(403, 'You must be assigned as head of a department. Please contact an administrator to assign you to a department.');
         }
 
         $filters = $request->only(['staff_id', 'leave_type']);
 
-        // Get hr_approved requests for this department's staff
-        $query = LeaveRequest::hrApproved()
+        // Get pending head approval requests for this department's staff
+        $query = LeaveRequest::pendingHeadApproval()
             ->whereHas('staff', function ($q) use ($department) {
                 $q->where('department_id', $department->id);
             })
@@ -61,7 +50,7 @@ class LeaveRequestController extends Controller
         $leaveRequests = $query->orderBy('created_at', 'asc')->paginate(20);
 
         // Get pending count for this department
-        $pendingCount = LeaveRequest::hrApproved()
+        $pendingCount = LeaveRequest::pendingHeadApproval()
             ->whereHas('staff', function ($q) use ($department) {
                 $q->where('department_id', $department->id);
             })
@@ -99,7 +88,7 @@ class LeaveRequestController extends Controller
      */
     public function approve(Request $request, int $id): RedirectResponse
     {
-        $leaveRequest = LeaveRequest::findOrFail($id);
+        $leaveRequest = LeaveRequest::with(['staff.department'])->findOrFail($id);
 
         // Authorization check
         $this->authorize('approveAsHead', $leaveRequest);
@@ -109,10 +98,20 @@ class LeaveRequestController extends Controller
         ]);
 
         try {
-            $this->leaveService->approveAsHead($id, $request->user()->id, $validated['notes'] ?? null);
+            \Log::info('Head approving leave request', ['id' => $id, 'user_id' => $request->user()->id]);
 
-            return back()->with('success', 'Leave request approved successfully.');
+            $leaveRequest = $this->leaveService->approveAsHead($id, $request->user()->id, $validated['notes'] ?? null);
+
+            $leaveRequest->refresh();
+            $message = $leaveRequest->status === 'approved'
+                ? 'Leave request fully approved.'
+                : 'Leave request approved by department head. Pending HR approval.';
+
+            \Log::info('Head approval successful', ['status' => $leaveRequest->status, 'message' => $message]);
+
+            return redirect()->route('head.leave.requests.index')->with('success', $message);
         } catch (\Exception $e) {
+            \Log::error('Head approval failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return back()->withErrors(['error' => $e->getMessage()]);
         }
     }
@@ -122,7 +121,7 @@ class LeaveRequestController extends Controller
      */
     public function reject(Request $request, int $id): RedirectResponse
     {
-        $leaveRequest = LeaveRequest::findOrFail($id);
+        $leaveRequest = LeaveRequest::with(['staff.department'])->findOrFail($id);
 
         // Authorization check
         $this->authorize('rejectAsHead', $leaveRequest);

@@ -38,9 +38,8 @@ class StaffController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'email']);
 
-        // Get active departments
-        $departments = Department::active()
-            ->orderBy('name')
+        // Get departments
+        $departments = Department::orderBy('name')
             ->get(['id', 'name', 'code']);
 
         return Inertia::render('admin/staff/Create', [
@@ -84,9 +83,8 @@ class StaffController extends Controller
     {
         $staff->load(['user', 'department']);
 
-        // Get active departments
-        $departments = Department::active()
-            ->orderBy('name')
+        // Get departments
+        $departments = Department::orderBy('name')
             ->get(['id', 'name', 'code']);
 
         return Inertia::render('admin/staff/Edit', [

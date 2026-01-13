@@ -27,8 +27,8 @@ interface LeaveRequest {
     end_date: string;
     total_days: number;
     reason: string;
-    status: 'hr_approved';
-    hr_reviewed_at: string;
+    status: 'pending';
+    hr_reviewed_at: string | null;
     hr_review_notes: string | null;
     staff: {
         id: number;
@@ -42,7 +42,7 @@ interface LeaveRequest {
     hr_reviewer?: {
         id: number;
         name: string;
-    };
+    } | null;
 }
 
 interface Pagination {
@@ -104,7 +104,7 @@ const getLeaveTypeLabel = (type: string) => {
                     </CardHeader>
                     <CardContent>
                         <div class="text-2xl font-bold">{{ pendingCount }}</div>
-                        <p class="text-xs text-muted-foreground">HR-approved requests</p>
+                        <p class="text-xs text-muted-foreground">Awaiting your review</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -135,8 +135,8 @@ const getLeaveTypeLabel = (type: string) => {
                                     <TableHead>Type</TableHead>
                                     <TableHead>Dates</TableHead>
                                     <TableHead>Days</TableHead>
-                                    <TableHead>HR Approved By</TableHead>
-                                    <TableHead>HR Notes</TableHead>
+                                    <TableHead>HR Status</TableHead>
+                                    <TableHead>Notes</TableHead>
                                     <TableHead class="w-[70px]"></TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -164,12 +164,17 @@ const getLeaveTypeLabel = (type: string) => {
                                         {{ request.total_days }} {{ request.total_days === 1 ? 'day' : 'days' }}
                                     </TableCell>
                                     <TableCell>
-                                        <div class="text-sm">
-                                            <p class="font-medium">{{ request.hr_reviewer?.name || 'Unknown' }}</p>
-                                            <p class="text-xs text-muted-foreground">
-                                                {{ new Date(request.hr_reviewed_at).toLocaleDateString() }}
-                                            </p>
+                                        <div v-if="request.hr_reviewed_at" class="flex items-center gap-2">
+                                            <Badge variant="outline" class="bg-green-50 text-green-700 border-green-200">
+                                                ✓ Approved
+                                            </Badge>
+                                            <div class="text-xs text-muted-foreground">
+                                                by {{ request.hr_reviewer?.name || 'HR' }}
+                                            </div>
                                         </div>
+                                        <Badge v-else variant="outline" class="bg-orange-50 text-orange-700 border-orange-200">
+                                            Pending HR
+                                        </Badge>
                                     </TableCell>
                                     <TableCell>
                                         <div class="text-sm text-muted-foreground max-w-xs truncate">

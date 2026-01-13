@@ -36,14 +36,14 @@ class LeaveRequestController extends Controller
 
         $leaveRequests = $query->orderBy('created_at', 'desc')->paginate(20);
 
-        // Get pending count and hr_approved count
-        $pendingCount = LeaveRequest::pending()->count();
-        $hrApprovedCount = LeaveRequest::hrApproved()->count();
+        // Get pending count
+        $pendingHrCount = LeaveRequest::pendingHrApproval()->count();
+        $pendingSecondApprovalCount = LeaveRequest::pendingSecondApproval()->count();
 
         return Inertia::render('admin/leave/Index', [
             'leaveRequests' => $leaveRequests,
-            'pendingCount' => $pendingCount,
-            'hrApprovedCount' => $hrApprovedCount,
+            'pendingHrCount' => $pendingHrCount,
+            'pendingSecondApprovalCount' => $pendingSecondApprovalCount,
             'filters' => $filters,
         ]);
     }
@@ -98,8 +98,9 @@ class LeaveRequestController extends Controller
     {
         $filters = $request->only(['staff_id', 'leave_type']);
 
-        $query = LeaveRequest::pending()
-            ->with(['staff.user', 'staff.department']);
+        // Get pending leave requests (no HR review yet)
+        $query = LeaveRequest::pendingHrApproval()
+            ->with(['staff.user', 'staff.department', 'headReviewer']);
 
         if (isset($filters['staff_id'])) {
             $query->where('staff_id', $filters['staff_id']);
@@ -132,9 +133,14 @@ class LeaveRequestController extends Controller
         ]);
 
         try {
-            $this->leaveService->approveAsHR($id, $request->user()->id, $validated['notes'] ?? null);
+            $leaveRequest = $this->leaveService->approveAsHR($id, $request->user()->id, $validated['notes'] ?? null);
 
-            return back()->with('success', 'Leave request approved. Pending department head approval.');
+            $leaveRequest->refresh();
+            $message = $leaveRequest->status === 'approved'
+                ? 'Leave request fully approved.'
+                : 'Leave request approved by HR. Pending department head approval.';
+
+            return back()->with('success', $message);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
         }

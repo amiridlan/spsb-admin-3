@@ -113,6 +113,11 @@ const submitApproval = () => {
     approveForm.post(`/head/leave/requests/${props.leaveRequest.id}/approve`, {
         onSuccess: () => {
             approveDialogOpen.value = false;
+            // Inertia will handle the redirect automatically
+        },
+        onError: (errors) => {
+            console.error('Approval failed:', errors);
+            // Dialog stays open to show errors
         },
     });
 };
@@ -121,6 +126,11 @@ const submitRejection = () => {
     rejectForm.post(`/head/leave/requests/${props.leaveRequest.id}/reject`, {
         onSuccess: () => {
             rejectDialogOpen.value = false;
+            // Inertia will handle the redirect automatically
+        },
+        onError: (errors) => {
+            console.error('Rejection failed:', errors);
+            // Dialog stays open to show errors
         },
     });
 };

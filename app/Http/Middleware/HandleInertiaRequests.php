@@ -54,6 +54,11 @@ class HandleInertiaRequests extends Middleware
                     'updated_at' => $request->user()->updated_at,
                 ] : null,
             ],
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
+                'message' => fn () => $request->session()->get('message'),
+            ],
         ]);
     }
 }

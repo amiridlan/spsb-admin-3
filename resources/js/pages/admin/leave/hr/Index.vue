@@ -147,7 +147,7 @@ const submitRejection = () => {
                 <div>
                     <h1 class="text-2xl font-semibold">HR Leave Review</h1>
                     <p class="text-sm text-muted-foreground">
-                        Review pending leave requests (Step 1: HR Approval)
+                        Review pending leave requests requiring HR approval
                     </p>
                 </div>
             </div>
@@ -289,7 +289,7 @@ const submitRejection = () => {
             <DialogHeader>
                 <DialogTitle>Approve Leave Request (HR)</DialogTitle>
                 <DialogDescription>
-                    This will approve the leave request for department head review.
+                    Approve this leave request as HR. If the department head has already approved, the request will be fully approved.
                     <span v-if="selectedRequest">
                         {{ selectedRequest.staff.user.name }} -
                         {{ getLeaveTypeLabel(selectedRequest.leave_type) }}

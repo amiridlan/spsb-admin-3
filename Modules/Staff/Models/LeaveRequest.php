@@ -15,7 +15,6 @@ class LeaveRequest extends Model
 
     // Status constants
     public const STATUS_PENDING = 'pending';
-    public const STATUS_HR_APPROVED = 'hr_approved';
     public const STATUS_APPROVED = 'approved';
     public const STATUS_REJECTED = 'rejected';
     public const STATUS_CANCELLED = 'cancelled';
@@ -104,19 +103,56 @@ class LeaveRequest extends Model
     }
 
     /**
-     * Check if request is HR approved (pending head approval)
+     * Check if HR has reviewed (approved or rejected)
      */
-    public function isHrApproved(): bool
+    public function hasHrReviewed(): bool
     {
-        return $this->status === 'hr_approved';
+        return $this->hr_reviewed_by !== null;
     }
 
     /**
-     * Check if request is pending head approval (alias for isHrApproved)
+     * Check if Head has reviewed (approved or rejected)
+     */
+    public function hasHeadReviewed(): bool
+    {
+        return $this->head_reviewed_by !== null;
+    }
+
+    /**
+     * Check if both HR and Head have approved
+     */
+    public function hasBothApprovals(): bool
+    {
+        return $this->status === self::STATUS_APPROVED
+            && $this->hr_reviewed_by !== null
+            && $this->head_reviewed_by !== null;
+    }
+
+    /**
+     * Check if pending HR approval (pending status and no HR review)
+     */
+    public function isPendingHrApproval(): bool
+    {
+        return $this->status === self::STATUS_PENDING
+            && $this->hr_reviewed_by === null;
+    }
+
+    /**
+     * Check if pending Head approval (pending status and no Head review)
      */
     public function isPendingHeadApproval(): bool
     {
-        return $this->isHrApproved();
+        return $this->status === self::STATUS_PENDING
+            && $this->head_reviewed_by === null;
+    }
+
+    /**
+     * Check if pending second approval (one reviewer approved, waiting for other)
+     */
+    public function isPendingSecondApproval(): bool
+    {
+        return $this->status === self::STATUS_PENDING
+            && ($this->hr_reviewed_by !== null || $this->head_reviewed_by !== null);
     }
 
     /**
@@ -157,19 +193,31 @@ class LeaveRequest extends Model
     }
 
     /**
-     * Scope: Get HR approved requests (pending head approval)
+     * Scope: Get requests pending HR approval (no HR review yet)
      */
-    public function scopeHrApproved($query)
+    public function scopePendingHrApproval($query)
     {
-        return $query->where('status', 'hr_approved');
+        return $query->where('status', 'pending')->whereNull('hr_reviewed_by');
     }
 
     /**
-     * Scope: Get requests pending head approval (alias for hrApproved)
+     * Scope: Get requests pending head approval (no Head review yet)
      */
     public function scopePendingHeadApproval($query)
     {
-        return $query->where('status', 'hr_approved');
+        return $query->where('status', 'pending')->whereNull('head_reviewed_by');
+    }
+
+    /**
+     * Scope: Get requests pending second approval (one approved, waiting for other)
+     */
+    public function scopePendingSecondApproval($query)
+    {
+        return $query->where('status', 'pending')
+            ->where(function($q) {
+                $q->whereNotNull('hr_reviewed_by')
+                  ->orWhereNotNull('head_reviewed_by');
+            });
     }
 
     /**

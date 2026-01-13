@@ -29,7 +29,7 @@ interface LeaveRequest {
     end_date: string;
     total_days: number;
     reason: string;
-    status: 'pending' | 'hr_approved' | 'approved' | 'rejected' | 'cancelled';
+    status: 'pending' | 'approved' | 'rejected' | 'cancelled';
     hr_reviewed_at: string | null;
     hr_review_notes: string | null;
     head_reviewed_at: string | null;
@@ -74,8 +74,8 @@ interface Pagination {
 
 interface Props {
     leaveRequests: Pagination;
-    pendingCount: number;
-    hrApprovedCount: number;
+    pendingHrCount: number;
+    pendingSecondApprovalCount: number;
     filters: {
         status?: string;
         staff_id?: string;
@@ -93,7 +93,6 @@ const breadcrumbs = [
 const getStatusVariant = (status: string) => {
     const variants: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {
         pending: 'outline',
-        hr_approved: 'secondary',
         approved: 'default',
         rejected: 'destructive',
         cancelled: 'secondary',
@@ -101,15 +100,24 @@ const getStatusVariant = (status: string) => {
     return variants[status] || 'outline';
 };
 
-const getStatusLabel = (status: string) => {
-    const labels: Record<string, string> = {
-        pending: 'Pending HR Review',
-        hr_approved: 'Pending Head Approval',
-        approved: 'Approved',
-        rejected: 'Rejected',
-        cancelled: 'Cancelled',
-    };
-    return labels[status] || status;
+const getStatusLabel = (request: LeaveRequest) => {
+    if (request.status === 'approved') return 'Approved';
+    if (request.status === 'rejected') return 'Rejected';
+    if (request.status === 'cancelled') return 'Cancelled';
+
+    // Pending status - check which approvals are missing
+    const hrApproved = request.hr_reviewed_at !== null;
+    const headApproved = request.head_reviewed_at !== null;
+
+    if (!hrApproved && !headApproved) {
+        return 'Pending (HR & Head)';
+    } else if (hrApproved && !headApproved) {
+        return 'Pending Head Approval';
+    } else if (!hrApproved && headApproved) {
+        return 'Pending HR Approval';
+    }
+
+    return 'Pending';
 };
 
 const getLeaveTypeLabel = (type: string) => {
@@ -165,18 +173,18 @@ const filterByLeaveType = (type: string | null) => {
                         <Clock class="h-4 w-4 text-orange-500" />
                     </CardHeader>
                     <CardContent>
-                        <div class="text-2xl font-bold">{{ pendingCount }}</div>
+                        <div class="text-2xl font-bold">{{ pendingHrCount }}</div>
                         <p class="text-xs text-muted-foreground">Awaiting HR approval</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <div class="text-sm font-medium">Pending Head Review</div>
+                        <div class="text-sm font-medium">Pending Second Approval</div>
                         <Clock class="h-4 w-4 text-blue-500" />
                     </CardHeader>
                     <CardContent>
-                        <div class="text-2xl font-bold">{{ hrApprovedCount }}</div>
-                        <p class="text-xs text-muted-foreground">Awaiting department head</p>
+                        <div class="text-2xl font-bold">{{ pendingSecondApprovalCount }}</div>
+                        <p class="text-xs text-muted-foreground">One approval received</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -203,8 +211,7 @@ const filterByLeaveType = (type: string | null) => {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">All Status</SelectItem>
-                                    <SelectItem value="pending">Pending HR Review</SelectItem>
-                                    <SelectItem value="hr_approved">Pending Head Approval</SelectItem>
+                                    <SelectItem value="pending">Pending</SelectItem>
                                     <SelectItem value="approved">Approved</SelectItem>
                                     <SelectItem value="rejected">Rejected</SelectItem>
                                     <SelectItem value="cancelled">Cancelled</SelectItem>
@@ -263,7 +270,7 @@ const filterByLeaveType = (type: string | null) => {
                                     </TableCell>
                                     <TableCell>
                                         <Badge :variant="getStatusVariant(request.status)">
-                                            {{ getStatusLabel(request.status) }}
+                                            {{ getStatusLabel(request) }}
                                         </Badge>
                                     </TableCell>
                                     <TableCell>

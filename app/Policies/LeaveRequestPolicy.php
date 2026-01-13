@@ -8,37 +8,120 @@ use Modules\Staff\Models\LeaveRequest;
 class LeaveRequestPolicy
 {
     /**
-     * Determine if user can approve as HR/Admin (first step)
+     * Determine if user can approve as HR/Admin
      */
     public function approveAsHR(User $user, LeaveRequest $leaveRequest): bool
     {
         // Only admin and superadmin can approve as HR
-        return $user->isAdmin() || $user->isSuperAdmin();
+        if (!($user->isAdmin() || $user->isSuperAdmin())) {
+            return false;
+        }
+
+        // Cannot review if HR already reviewed
+        if ($leaveRequest->hasHrReviewed()) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
-     * Determine if user can approve as Department Head (second step)
+     * Determine if user can approve as Department Head
      */
     public function approveAsHead(User $user, LeaveRequest $leaveRequest): bool
+    {
+        // Must be head of department
+        if (!$user->isHeadOfDepartment()) {
+            \Log::info('approveAsHead: User is not head of department', ['user_id' => $user->id]);
+            return false;
+        }
+
+        // Cannot review if Head already reviewed
+        if ($leaveRequest->hasHeadReviewed()) {
+            \Log::info('approveAsHead: Head has already reviewed', ['leave_request_id' => $leaveRequest->id]);
+            return false;
+        }
+
+        // Ensure relationships are loaded
+        $user->loadMissing('headOfDepartment');
+        $leaveRequest->loadMissing('staff.department');
+
+        // Get the department where this user is the head
+        $department = $user->headOfDepartment;
+
+        if (!$department) {
+            \Log::info('approveAsHead: User has no department assigned', ['user_id' => $user->id]);
+            return false;
+        }
+
+        // Check if the leave request staff belongs to this department
+        $requestStaff = $leaveRequest->staff;
+
+        // Staff must have a department
+        if (!$requestStaff->department_id) {
+            \Log::info('approveAsHead: Staff has no department', ['staff_id' => $requestStaff->id]);
+            return false;
+        }
+
+        // User's department must match staff's department
+        $authorized = $department->id === $requestStaff->department_id;
+
+        \Log::info('approveAsHead: Final authorization result', [
+            'authorized' => $authorized,
+            'user_id' => $user->id,
+            'user_dept_id' => $department->id,
+            'staff_dept_id' => $requestStaff->department_id,
+            'leave_request_id' => $leaveRequest->id,
+        ]);
+
+        return $authorized;
+    }
+
+    /**
+     * Determine if user can reject as HR/Admin
+     */
+    public function rejectAsHR(User $user, LeaveRequest $leaveRequest): bool
+    {
+        // Only admin and superadmin can reject as HR
+        if (!($user->isAdmin() || $user->isSuperAdmin())) {
+            return false;
+        }
+
+        // Cannot review if HR already reviewed
+        if ($leaveRequest->hasHrReviewed()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Determine if user can reject as Department Head
+     */
+    public function rejectAsHead(User $user, LeaveRequest $leaveRequest): bool
     {
         // Must be head of department
         if (!$user->isHeadOfDepartment()) {
             return false;
         }
 
-        // Must have a staff profile
-        if (!$user->hasStaffProfile()) {
+        // Cannot review if Head already reviewed
+        if ($leaveRequest->hasHeadReviewed()) {
             return false;
         }
 
-        $userStaff = $user->staffProfile;
+        // Ensure relationships are loaded
+        $user->loadMissing('headOfDepartment');
+        $leaveRequest->loadMissing('staff.department');
 
-        // Must have a department assignment
-        if (!$userStaff->department_id) {
+        // Get the department where this user is the head
+        $department = $user->headOfDepartment;
+
+        if (!$department) {
             return false;
         }
 
-        // Check if user is head of the leave request staff's department
+        // Check if the leave request staff belongs to this department
         $requestStaff = $leaveRequest->staff;
 
         // Staff must have a department
@@ -47,31 +130,7 @@ class LeaveRequestPolicy
         }
 
         // User's department must match staff's department
-        if ($userStaff->department_id !== $requestStaff->department_id) {
-            return false;
-        }
-
-        // Check if user is actually assigned as head of that department
-        $department = $userStaff->department;
-        return $department && $department->head_user_id === $user->id;
-    }
-
-    /**
-     * Determine if user can reject as HR/Admin
-     */
-    public function rejectAsHR(User $user, LeaveRequest $leaveRequest): bool
-    {
-        // Same as approveAsHR
-        return $this->approveAsHR($user, $leaveRequest);
-    }
-
-    /**
-     * Determine if user can reject as Department Head
-     */
-    public function rejectAsHead(User $user, LeaveRequest $leaveRequest): bool
-    {
-        // Same as approveAsHead
-        return $this->approveAsHead($user, $leaveRequest);
+        return $department->id === $requestStaff->department_id;
     }
 
     /**
@@ -90,15 +149,16 @@ class LeaveRequestPolicy
         }
 
         // Department heads can view requests from their department
-        if ($user->isHeadOfDepartment() && $user->hasStaffProfile()) {
-            $userStaff = $user->staffProfile;
+        if ($user->isHeadOfDepartment()) {
+            // Ensure relationships are loaded
+            $user->loadMissing('headOfDepartment');
+            $leaveRequest->loadMissing('staff.department');
+
+            $department = $user->headOfDepartment;
             $requestStaff = $leaveRequest->staff;
 
-            if ($userStaff->department_id && $requestStaff->department_id) {
-                $department = $userStaff->department;
-                return $department
-                    && $department->head_user_id === $user->id
-                    && $userStaff->department_id === $requestStaff->department_id;
+            if ($department && $requestStaff->department_id) {
+                return $department->id === $requestStaff->department_id;
             }
         }
 
