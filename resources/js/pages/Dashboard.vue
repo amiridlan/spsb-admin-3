@@ -112,7 +112,7 @@ const getEventCountForDay = (day: number, month: number, year: number) => {
             </div>
 
             <!-- Stats Overview -->
-            <div class="grid gap-4 md:grid-cols-1 lg:grid-cols-1">
+            <div class="grid gap-4 md:grid-cols-3">
                 <Card>
                     <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle class="text-sm font-medium">Total Events</CardTitle>
@@ -125,10 +125,6 @@ const getEventCountForDay = (day: number, month: number, year: number) => {
                         </p>
                     </CardContent>
                 </Card>
-            </div>
-
-            <!-- Status Breakdown -->
-            <div class="grid gap-4 md:grid-cols-4">
                 <Card>
                     <CardHeader class="pb-2">
                         <CardTitle class="text-sm font-medium flex items-center gap-2">
@@ -140,7 +136,6 @@ const getEventCountForDay = (day: number, month: number, year: number) => {
                         <div class="text-2xl font-bold">{{ stats.pending_bookings }}</div>
                     </CardContent>
                 </Card>
-
                 <Card>
                     <CardHeader class="pb-2">
                         <CardTitle class="text-sm font-medium flex items-center gap-2">
@@ -152,6 +147,11 @@ const getEventCountForDay = (day: number, month: number, year: number) => {
                         <div class="text-2xl font-bold">{{ stats.confirmed_bookings }}</div>
                     </CardContent>
                 </Card>
+            </div>
+
+            <!-- Status Breakdown -->
+            <div class="grid gap-4 md:grid-cols-2">
+
 
                 <Card>
                     <CardHeader class="pb-2">
@@ -301,7 +301,7 @@ const getEventCountForDay = (day: number, month: number, year: number) => {
                                             return `${x},${y}`;
                                         }).join(' ')"
                                         fill="none"
-                                        stroke="hsl(var(--primary))"
+                                        class="stroke-primary"
                                         stroke-width="3"
                                         stroke-linecap="round"
                                         stroke-linejoin="round"
@@ -314,7 +314,7 @@ const getEventCountForDay = (day: number, month: number, year: number) => {
                                         :cx="(idx / (bookingsTrend.values.length - 1)) * 600"
                                         :cy="200 - ((val / Math.max(...bookingsTrend.values, 1)) * 180)"
                                         r="4"
-                                        fill="hsl(var(--primary))"
+                                        class="fill-primary"
                                     />
                                 </svg>
 
