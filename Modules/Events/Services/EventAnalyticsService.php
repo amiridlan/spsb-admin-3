@@ -244,6 +244,17 @@ class EventAnalyticsService implements EventAnalyticsServiceInterface
             ];
         });
 
+        // Find the most used event space
+        $mostUsedSpace = $events->groupBy('event_space_id')
+            ->map->count()
+            ->sortDesc()
+            ->keys()
+            ->first();
+
+        $mostUsedSpaceName = $mostUsedSpace
+            ? EventSpace::find($mostUsedSpace)?->name ?? 'N/A'
+            : 'N/A';
+
         return [
             'type' => 'bookings',
             'title' => 'Bookings Report',
@@ -253,7 +264,7 @@ class EventAnalyticsService implements EventAnalyticsServiceInterface
             'summary' => [
                 'total_bookings' => $data->count(),
                 'total_days' => $data->sum('duration'),
-                'avg_duration' => $data->count() > 0 ? round($data->avg('duration'), 1) : 0,
+                'most_used_event_space' => $mostUsedSpaceName,
                 'by_status' => $events->groupBy('status')->map->count(),
             ],
         ];

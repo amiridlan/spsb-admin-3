@@ -8,7 +8,11 @@ use App\Traits\ApiResponse;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\QueryParam;
+use Knuckles\Scribe\Attributes\Response;
 
+#[Group('Calendar API', 'FullCalendar-compatible event calendar endpoints')]
 class CalendarApiController extends Controller
 {
     use ApiResponse;
@@ -40,11 +44,18 @@ class CalendarApiController extends Controller
     ];
 
     /**
-     * Get calendar events in FullCalendar format
+     * Get Calendar Events
      *
-     * @param Request $request
-     * @return JsonResponse
+     * Retrieve events formatted for FullCalendar. Returns events with proper color coding based on status.
+     *
+     * @unauthenticated
      */
+    #[QueryParam('start', 'date', 'Start date for filtering (Y-m-d)', required: false, example: '2024-01-01')]
+    #[QueryParam('end', 'date', 'End date for filtering (Y-m-d)', required: false, example: '2024-12-31')]
+    #[QueryParam('space_id', 'integer', 'Filter by event space ID', required: false, example: 1)]
+    #[QueryParam('status', 'string', 'Filter by status (pending, confirmed, completed, cancelled)', required: false, example: 'confirmed')]
+    #[QueryParam('include_cancelled', 'boolean', 'Include cancelled events', required: false, example: false)]
+    #[Response(['success' => true, 'message' => 'Calendar events retrieved successfully', 'data' => [['id' => 1, 'title' => 'Corporate Meeting', 'start' => '2024-06-15', 'end' => '2024-06-17', 'allDay' => true, 'backgroundColor' => '#10b981', 'borderColor' => '#059669', 'textColor' => '#ffffff', 'extendedProps' => ['status' => 'confirmed', 'space' => 'Grand Ballroom', 'client' => 'John Smith']]]], 200, 'Calendar events list')]
     public function index(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -97,11 +108,18 @@ class CalendarApiController extends Controller
     }
 
     /**
-     * Get calendar events for a specific month
+     * Get Monthly Calendar
      *
-     * @param Request $request
-     * @return JsonResponse
+     * Retrieve events for a specific month, formatted for FullCalendar.
+     *
+     * @unauthenticated
      */
+    #[QueryParam('year', 'integer', 'The year (2000-2100)', required: true, example: 2024)]
+    #[QueryParam('month', 'integer', 'The month (1-12)', required: true, example: 6)]
+    #[QueryParam('space_id', 'integer', 'Filter by event space ID', required: false, example: 1)]
+    #[QueryParam('status', 'string', 'Filter by status (pending, confirmed, completed, cancelled)', required: false, example: 'confirmed')]
+    #[QueryParam('include_cancelled', 'boolean', 'Include cancelled events', required: false, example: false)]
+    #[Response(['success' => true, 'message' => 'Calendar events for month retrieved successfully', 'data' => ['year' => 2024, 'month' => 6, 'month_name' => 'June', 'start_date' => '2024-06-01', 'end_date' => '2024-06-30', 'events' => [], 'total_events' => 0]], 200, 'Monthly calendar data')]
     public function month(Request $request): JsonResponse
     {
         $validated = $request->validate([

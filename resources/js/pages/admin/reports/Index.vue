@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import axios from 'axios';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -147,6 +147,18 @@ const reportTypes = [
     { value: 'financial', label: 'Financial Report', icon: DollarSign, description: 'Revenue and financial metrics (Coming soon)' },
     { value: 'custom', label: 'Custom Report', icon: FileText, description: 'Combined report with all data' },
 ];
+
+const filteredSummary = computed(() => {
+    if (!reportData.value?.summary) return {};
+
+    // For bookings report, only show total_bookings, total_days, and most_used_event_space
+    if (reportData.value.type === 'bookings') {
+        const { total_bookings, total_days, most_used_event_space } = reportData.value.summary;
+        return { total_bookings, total_days, most_used_event_space };
+    }
+
+    return reportData.value.summary;
+});
 </script>
 
 <template>
@@ -546,7 +558,7 @@ const reportTypes = [
                     <div v-if="reportData.summary" class="border-t pt-4">
                         <h3 class="text-lg font-semibold mb-3">Summary</h3>
                         <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                            <Card v-for="(value, key) in reportData.summary" :key="key">
+                            <Card v-for="(value, key) in filteredSummary" :key="key">
                                 <CardHeader class="pb-2">
                                     <CardDescription class="text-xs">
                                         {{ key.toString().replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) }}

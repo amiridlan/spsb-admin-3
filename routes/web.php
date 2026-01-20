@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ApiTokenController;
 use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\EventController;
 use App\Http\Controllers\Admin\EventSpaceController;
@@ -100,6 +101,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('events.staff.update');
         Route::delete('events/{event}/staff/{staff}', [EventStaffController::class, 'destroy'])
             ->name('events.staff.destroy');
+
+        // API Token management
+        Route::get('api-tokens', [ApiTokenController::class, 'index'])
+            ->name('api-tokens.index');
+        Route::post('api-tokens', [ApiTokenController::class, 'store'])
+            ->name('api-tokens.store');
+        Route::delete('api-tokens/all', [ApiTokenController::class, 'destroyAll'])
+            ->name('api-tokens.destroy-all');
+        Route::delete('api-tokens/{tokenId}', [ApiTokenController::class, 'destroy'])
+            ->name('api-tokens.destroy');
     });
 
     // Staff routes (for staff role users and heads of department with staff profiles)
@@ -144,3 +155,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 require __DIR__ . '/settings.php';
+
+// API Documentation - restricted to non-production environments
+Route::middleware(['restrict.docs'])->group(function () {
+    Route::get('/docs', function () {
+        return file_get_contents(public_path('docs/index.html'));
+    })->name('api.docs');
+});
+

@@ -1,0 +1,1198 @@
+openapi: 3.0.3
+info:
+  title: 'Event Space Booking System API Documentation'
+  description: 'API for managing event space bookings, calendar events, and staff assignments.'
+  version: 1.0.0
+servers:
+  -
+    url: 'http://localhost'
+tags:
+  -
+    name: Authentication
+    description: 'API endpoints for user authentication'
+  -
+    name: 'Event Spaces'
+    description: 'Browse available event spaces'
+  -
+    name: 'Events & Bookings'
+    description: 'Manage events and bookings'
+  -
+    name: 'Calendar API'
+    description: 'FullCalendar-compatible event calendar endpoints'
+  -
+    name: Staff
+    description: 'View staff assignments for events'
+components:
+  securitySchemes:
+    default:
+      type: http
+      scheme: bearer
+      description: 'You can retrieve your token by making a POST request to `/api/v1/login` with your email and password.'
+security:
+  -
+    default: []
+paths:
+  /api/v1/login:
+    post:
+      summary: Login
+      operationId: login
+      description: 'Authenticate a user and receive an API token.'
+      parameters: []
+      responses:
+        200:
+          description: 'Successful login'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: true
+                  message: 'Login successful'
+                  data:
+                    token: your-api-token
+                    user:
+                      id: 1
+                      name: 'John Doe'
+                      email: user@example.com
+                      role: admin
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Login successful'
+                  data:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+                        example: your-api-token
+                      user:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          name:
+                            type: string
+                            example: 'John Doe'
+                          email:
+                            type: string
+                            example: user@example.com
+                          role:
+                            type: string
+                            example: admin
+        422:
+          description: 'Invalid credentials'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: 'The provided credentials are incorrect.'
+                  errors:
+                    email:
+                      - 'The provided credentials are incorrect.'
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'The provided credentials are incorrect.'
+                  errors:
+                    type: object
+                    properties:
+                      email:
+                        type: array
+                        example:
+                          - 'The provided credentials are incorrect.'
+                        items:
+                          type: string
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  description: 'User email address'
+                  example: user@example.com
+                password:
+                  type: string
+                  description: 'User password'
+                  example: password123
+              required:
+                - email
+                - password
+      security: []
+  /api/v1/logout:
+    post:
+      summary: Logout
+      operationId: logout
+      description: 'Revoke the current API token and log out the user.'
+      parameters: []
+      responses:
+        200:
+          description: 'Successful logout'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: true
+                  message: 'Logged out successfully'
+                  data: null
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Logged out successfully'
+                  data:
+                    type: string
+                    example: null
+      tags:
+        - Authentication
+  /api/v1/user:
+    get:
+      summary: 'Get Current User'
+      operationId: getCurrentUser
+      description: "Retrieve the authenticated user's profile information."
+      parameters: []
+      responses:
+        200:
+          description: 'User profile'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: true
+                  data:
+                    id: 1
+                    name: 'John Doe'
+                    email: user@example.com
+                    role: admin
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      name:
+                        type: string
+                        example: 'John Doe'
+                      email:
+                        type: string
+                        example: user@example.com
+                      role:
+                        type: string
+                        example: admin
+      tags:
+        - Authentication
+  /api/v1/event-spaces:
+    get:
+      summary: 'List Event Spaces'
+      operationId: listEventSpaces
+      description: 'Get a list of all active event spaces available for booking.'
+      parameters: []
+      responses:
+        200:
+          description: 'List of event spaces'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: true
+                  data:
+                    -
+                      id: 1
+                      name: 'Grand Ballroom'
+                      description: 'Large event hall'
+                      capacity: 500
+                      location: 'Building A'
+                      amenities:
+                        - WiFi
+                        - 'Sound System'
+                      is_active: true
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    example:
+                      -
+                        id: 1
+                        name: 'Grand Ballroom'
+                        description: 'Large event hall'
+                        capacity: 500
+                        location: 'Building A'
+                        amenities:
+                          - WiFi
+                          - 'Sound System'
+                        is_active: true
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        name:
+                          type: string
+                          example: 'Grand Ballroom'
+                        description:
+                          type: string
+                          example: 'Large event hall'
+                        capacity:
+                          type: integer
+                          example: 500
+                        location:
+                          type: string
+                          example: 'Building A'
+                        amenities:
+                          type: array
+                          example:
+                            - WiFi
+                            - 'Sound System'
+                          items:
+                            type: string
+                        is_active:
+                          type: boolean
+                          example: true
+      tags:
+        - 'Event Spaces'
+      security: []
+  '/api/v1/event-spaces/{eventSpace_id}':
+    get:
+      summary: 'Get Event Space Details'
+      operationId: getEventSpaceDetails
+      description: 'Get detailed information about a specific event space.'
+      parameters: []
+      responses:
+        200:
+          description: 'Event space details'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: true
+                  data:
+                    id: 1
+                    name: 'Grand Ballroom'
+                    description: 'Large event hall with modern facilities'
+                    capacity: 500
+                    location: 'Building A'
+                    amenities:
+                      - WiFi
+                      - 'Sound System'
+                      - Projector
+                    is_active: true
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      name:
+                        type: string
+                        example: 'Grand Ballroom'
+                      description:
+                        type: string
+                        example: 'Large event hall with modern facilities'
+                      capacity:
+                        type: integer
+                        example: 500
+                      location:
+                        type: string
+                        example: 'Building A'
+                      amenities:
+                        type: array
+                        example:
+                          - WiFi
+                          - 'Sound System'
+                          - Projector
+                        items:
+                          type: string
+                      is_active:
+                        type: boolean
+                        example: true
+        404:
+          description: 'Space not found or inactive'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: 'Event space not available'
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Event space not available'
+      tags:
+        - 'Event Spaces'
+      security: []
+    parameters:
+      -
+        in: path
+        name: eventSpace_id
+        description: 'The ID of the eventSpace.'
+        example: 1
+        required: true
+        schema:
+          type: integer
+      -
+        in: path
+        name: eventSpace
+        description: 'The ID of the event space'
+        example: 1
+        required: true
+        schema:
+          type: integer
+  /api/v1/events:
+    get:
+      summary: 'List Events'
+      operationId: listEvents
+      description: 'Get a list of events with optional filters. By default, cancelled events are excluded.'
+      parameters:
+        -
+          in: query
+          name: space_id
+          description: 'Filter by event space ID'
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: 'Filter by event space ID'
+            example: 1
+        -
+          in: query
+          name: start_date
+          description: 'Filter events starting from this date (Y-m-d)'
+          example: '2024-01-01'
+          required: false
+          schema:
+            type: date
+            description: 'Filter events starting from this date (Y-m-d)'
+            example: '2024-01-01'
+        -
+          in: query
+          name: end_date
+          description: 'Filter events ending before this date (Y-m-d)'
+          example: '2024-12-31'
+          required: false
+          schema:
+            type: date
+            description: 'Filter events ending before this date (Y-m-d)'
+            example: '2024-12-31'
+      responses:
+        200:
+          description: 'List of events'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: true
+                  data:
+                    -
+                      id: 1
+                      title: 'Corporate Meeting'
+                      client_name: 'Acme Corp'
+                      start_date: '2024-06-15'
+                      end_date: '2024-06-16'
+                      status: confirmed
+                      event_space:
+                        id: 1
+                        name: 'Grand Ballroom'
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    example:
+                      -
+                        id: 1
+                        title: 'Corporate Meeting'
+                        client_name: 'Acme Corp'
+                        start_date: '2024-06-15'
+                        end_date: '2024-06-16'
+                        status: confirmed
+                        event_space:
+                          id: 1
+                          name: 'Grand Ballroom'
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        title:
+                          type: string
+                          example: 'Corporate Meeting'
+                        client_name:
+                          type: string
+                          example: 'Acme Corp'
+                        start_date:
+                          type: string
+                          example: '2024-06-15'
+                        end_date:
+                          type: string
+                          example: '2024-06-16'
+                        status:
+                          type: string
+                          example: confirmed
+                        event_space:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            name:
+                              type: string
+                              example: 'Grand Ballroom'
+      tags:
+        - 'Events & Bookings'
+      security: []
+  '/api/v1/events/{event_id}':
+    get:
+      summary: 'Get Event Details'
+      operationId: getEventDetails
+      description: 'Get detailed information about a specific event.'
+      parameters: []
+      responses:
+        200:
+          description: 'Event details'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: true
+                  data:
+                    id: 1
+                    title: 'Corporate Meeting'
+                    description: 'Annual company meeting'
+                    client_name: 'Acme Corp'
+                    client_email: contact@acme.com
+                    start_date: '2024-06-15'
+                    end_date: '2024-06-16'
+                    status: confirmed
+                    event_space:
+                      id: 1
+                      name: 'Grand Ballroom'
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      title:
+                        type: string
+                        example: 'Corporate Meeting'
+                      description:
+                        type: string
+                        example: 'Annual company meeting'
+                      client_name:
+                        type: string
+                        example: 'Acme Corp'
+                      client_email:
+                        type: string
+                        example: contact@acme.com
+                      start_date:
+                        type: string
+                        example: '2024-06-15'
+                      end_date:
+                        type: string
+                        example: '2024-06-16'
+                      status:
+                        type: string
+                        example: confirmed
+                      event_space:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          name:
+                            type: string
+                            example: 'Grand Ballroom'
+        404:
+          description: 'Event cancelled or not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: 'Event not available'
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Event not available'
+      tags:
+        - 'Events & Bookings'
+      security: []
+    parameters:
+      -
+        in: path
+        name: event_id
+        description: 'The ID of the event.'
+        example: 1
+        required: true
+        schema:
+          type: integer
+      -
+        in: path
+        name: event
+        description: 'The ID of the event'
+        example: 1
+        required: true
+        schema:
+          type: integer
+  /api/v1/events/check-availability:
+    post:
+      summary: 'Check Availability'
+      operationId: checkAvailability
+      description: 'Check if a specific event space is available for the given date range.'
+      parameters: []
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  -
+                    description: 'Space is available'
+                    type: object
+                    example:
+                      success: true
+                      data:
+                        available: true
+                        message: 'Space is available'
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      data:
+                        type: object
+                        properties:
+                          available:
+                            type: boolean
+                            example: true
+                          message:
+                            type: string
+                            example: 'Space is available'
+                  -
+                    description: 'Space has conflicts'
+                    type: object
+                    example:
+                      success: true
+                      data:
+                        available: false
+                        message: 'Space is not available for the selected dates'
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      data:
+                        type: object
+                        properties:
+                          available:
+                            type: boolean
+                            example: false
+                          message:
+                            type: string
+                            example: 'Space is not available for the selected dates'
+      tags:
+        - 'Events & Bookings'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event_space_id:
+                  type: integer
+                  description: 'The ID of the event space to check'
+                  example: 1
+                start_date:
+                  type: date
+                  description: 'Start date (Y-m-d)'
+                  example: '2024-06-15'
+                end_date:
+                  type: date
+                  description: 'End date (Y-m-d)'
+                  example: '2024-06-16'
+              required:
+                - event_space_id
+                - start_date
+                - end_date
+      security: []
+  /api/v1/bookings:
+    post:
+      summary: 'Create Booking'
+      operationId: createBooking
+      description: "Create a new event booking request. The booking will start with 'pending' status and requires admin approval."
+      parameters: []
+      responses:
+        201:
+          description: 'Booking created'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: true
+                  message: 'Booking request created successfully'
+                  data:
+                    id: 1
+                    title: 'Corporate Meeting'
+                    status: pending
+                    start_date: '2024-06-15'
+                    end_date: '2024-06-16'
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Booking request created successfully'
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      title:
+                        type: string
+                        example: 'Corporate Meeting'
+                      status:
+                        type: string
+                        example: pending
+                      start_date:
+                        type: string
+                        example: '2024-06-15'
+                      end_date:
+                        type: string
+                        example: '2024-06-16'
+        422:
+          description: 'Date conflict'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: 'Space is not available for the selected dates'
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Space is not available for the selected dates'
+      tags:
+        - 'Events & Bookings'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event_space_id:
+                  type: integer
+                  description: 'The ID of the event space to book'
+                  example: 1
+                title:
+                  type: string
+                  description: 'Event title'
+                  example: 'Corporate Annual Meeting'
+                description:
+                  type: string
+                  description: 'Event description'
+                  example: 'Annual company-wide meeting and celebration'
+                client_name:
+                  type: string
+                  description: 'Client/organizer name'
+                  example: 'John Smith'
+                client_email:
+                  type: email
+                  description: 'Client email address'
+                  example: john@example.com
+                client_phone:
+                  type: string
+                  description: 'Client phone number'
+                  example: '+1234567890'
+                start_date:
+                  type: date
+                  description: 'Event start date (Y-m-d)'
+                  example: '2024-06-15'
+                end_date:
+                  type: date
+                  description: 'Event end date (Y-m-d)'
+                  example: '2024-06-16'
+                start_time:
+                  type: string
+                  description: 'Event start time (HH:mm)'
+                  example: '09:00'
+                end_time:
+                  type: string
+                  description: 'Event end time (HH:mm)'
+                  example: '17:00'
+              required:
+                - event_space_id
+                - title
+                - client_name
+                - client_email
+                - start_date
+                - end_date
+  /api/v1/events/calendar:
+    get:
+      summary: 'Get Calendar Events'
+      operationId: getCalendarEvents
+      description: 'Retrieve events formatted for FullCalendar. Returns events with proper color coding based on status.'
+      parameters:
+        -
+          in: query
+          name: start
+          description: 'Start date for filtering (Y-m-d)'
+          example: '2024-01-01'
+          required: false
+          schema:
+            type: date
+            description: 'Start date for filtering (Y-m-d)'
+            example: '2024-01-01'
+        -
+          in: query
+          name: end
+          description: 'End date for filtering (Y-m-d)'
+          example: '2024-12-31'
+          required: false
+          schema:
+            type: date
+            description: 'End date for filtering (Y-m-d)'
+            example: '2024-12-31'
+        -
+          in: query
+          name: space_id
+          description: 'Filter by event space ID'
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: 'Filter by event space ID'
+            example: 1
+        -
+          in: query
+          name: status
+          description: 'Filter by status (pending, confirmed, completed, cancelled)'
+          example: confirmed
+          required: false
+          schema:
+            type: string
+            description: 'Filter by status (pending, confirmed, completed, cancelled)'
+            example: confirmed
+        -
+          in: query
+          name: include_cancelled
+          description: 'Include cancelled events'
+          example: false
+          required: false
+          schema:
+            type: boolean
+            description: 'Include cancelled events'
+            example: false
+      responses:
+        200:
+          description: 'Calendar events list'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: true
+                  message: 'Calendar events retrieved successfully'
+                  data:
+                    -
+                      id: 1
+                      title: 'Corporate Meeting'
+                      start: '2024-06-15'
+                      end: '2024-06-17'
+                      allDay: true
+                      backgroundColor: '#10b981'
+                      borderColor: '#059669'
+                      textColor: '#ffffff'
+                      extendedProps:
+                        status: confirmed
+                        space: 'Grand Ballroom'
+                        client: 'John Smith'
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Calendar events retrieved successfully'
+                  data:
+                    type: array
+                    example:
+                      -
+                        id: 1
+                        title: 'Corporate Meeting'
+                        start: '2024-06-15'
+                        end: '2024-06-17'
+                        allDay: true
+                        backgroundColor: '#10b981'
+                        borderColor: '#059669'
+                        textColor: '#ffffff'
+                        extendedProps:
+                          status: confirmed
+                          space: 'Grand Ballroom'
+                          client: 'John Smith'
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        title:
+                          type: string
+                          example: 'Corporate Meeting'
+                        start:
+                          type: string
+                          example: '2024-06-15'
+                        end:
+                          type: string
+                          example: '2024-06-17'
+                        allDay:
+                          type: boolean
+                          example: true
+                        backgroundColor:
+                          type: string
+                          example: '#10b981'
+                        borderColor:
+                          type: string
+                          example: '#059669'
+                        textColor:
+                          type: string
+                          example: '#ffffff'
+                        extendedProps:
+                          type: object
+                          properties:
+                            status:
+                              type: string
+                              example: confirmed
+                            space:
+                              type: string
+                              example: 'Grand Ballroom'
+                            client:
+                              type: string
+                              example: 'John Smith'
+      tags:
+        - 'Calendar API'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                start:
+                  type: string
+                  description: 'Must be a valid date.'
+                  example: '2026-01-20T04:39:45'
+                  nullable: true
+                end:
+                  type: string
+                  description: 'Must be a valid date.'
+                  example: '2026-01-20T04:39:45'
+                  nullable: true
+                space_id:
+                  type: string
+                  description: 'The <code>id</code> of an existing record in the event_spaces table.'
+                  example: null
+                  nullable: true
+                status:
+                  type: string
+                  description: ''
+                  example: completed
+                  enum:
+                    - pending
+                    - confirmed
+                    - completed
+                    - cancelled
+                  nullable: true
+                include_cancelled:
+                  type: boolean
+                  description: ''
+                  example: false
+                  nullable: true
+      security: []
+  /api/v1/events/calendar/month:
+    get:
+      summary: 'Get Monthly Calendar'
+      operationId: getMonthlyCalendar
+      description: 'Retrieve events for a specific month, formatted for FullCalendar.'
+      parameters:
+        -
+          in: query
+          name: year
+          description: 'The year (2000-2100)'
+          example: 2024
+          required: true
+          schema:
+            type: integer
+            description: 'The year (2000-2100)'
+            example: 2024
+        -
+          in: query
+          name: month
+          description: 'The month (1-12)'
+          example: 6
+          required: true
+          schema:
+            type: integer
+            description: 'The month (1-12)'
+            example: 6
+        -
+          in: query
+          name: space_id
+          description: 'Filter by event space ID'
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: 'Filter by event space ID'
+            example: 1
+        -
+          in: query
+          name: status
+          description: 'Filter by status (pending, confirmed, completed, cancelled)'
+          example: confirmed
+          required: false
+          schema:
+            type: string
+            description: 'Filter by status (pending, confirmed, completed, cancelled)'
+            example: confirmed
+        -
+          in: query
+          name: include_cancelled
+          description: 'Include cancelled events'
+          example: false
+          required: false
+          schema:
+            type: boolean
+            description: 'Include cancelled events'
+            example: false
+      responses:
+        200:
+          description: 'Monthly calendar data'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: true
+                  message: 'Calendar events for month retrieved successfully'
+                  data:
+                    year: 2024
+                    month: 6
+                    month_name: June
+                    start_date: '2024-06-01'
+                    end_date: '2024-06-30'
+                    events: []
+                    total_events: 0
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Calendar events for month retrieved successfully'
+                  data:
+                    type: object
+                    properties:
+                      year:
+                        type: integer
+                        example: 2024
+                      month:
+                        type: integer
+                        example: 6
+                      month_name:
+                        type: string
+                        example: June
+                      start_date:
+                        type: string
+                        example: '2024-06-01'
+                      end_date:
+                        type: string
+                        example: '2024-06-30'
+                      events:
+                        type: array
+                        example: []
+                      total_events:
+                        type: integer
+                        example: 0
+      tags:
+        - 'Calendar API'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                year:
+                  type: integer
+                  description: 'Must be at least 2000. Must not be greater than 2100.'
+                  example: 16
+                month:
+                  type: integer
+                  description: 'Must be at least 1. Must not be greater than 12.'
+                  example: 11
+                space_id:
+                  type: string
+                  description: 'The <code>id</code> of an existing record in the event_spaces table.'
+                  example: null
+                  nullable: true
+                status:
+                  type: string
+                  description: ''
+                  example: cancelled
+                  enum:
+                    - pending
+                    - confirmed
+                    - completed
+                    - cancelled
+                  nullable: true
+                include_cancelled:
+                  type: boolean
+                  description: ''
+                  example: true
+                  nullable: true
+              required:
+                - year
+                - month
+      security: []
+  '/api/v1/bookings/{event_id}/staff':
+    get:
+      summary: 'Get Booking Staff'
+      operationId: getBookingStaff
+      description: "Get the list of staff members assigned to a specific event/booking.\nReturns limited staff information for privacy."
+      parameters: []
+      responses:
+        200:
+          description: 'Staff list'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: true
+                  message: 'Staff retrieved successfully'
+                  data:
+                    -
+                      id: 1
+                      name: 'Jane Doe'
+                      position: 'Event Coordinator'
+                      role: lead
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Staff retrieved successfully'
+                  data:
+                    type: array
+                    example:
+                      -
+                        id: 1
+                        name: 'Jane Doe'
+                        position: 'Event Coordinator'
+                        role: lead
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        name:
+                          type: string
+                          example: 'Jane Doe'
+                        position:
+                          type: string
+                          example: 'Event Coordinator'
+                        role:
+                          type: string
+                          example: lead
+        404:
+          description: 'Booking cancelled or not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: 'Booking not available'
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Booking not available'
+      tags:
+        - Staff
+      security: []
+    parameters:
+      -
+        in: path
+        name: event_id
+        description: 'The ID of the event.'
+        example: 1
+        required: true
+        schema:
+          type: integer
+      -
+        in: path
+        name: event
+        description: 'The ID of the event/booking'
+        example: 1
+        required: true
+        schema:
+          type: integer

@@ -150,27 +150,27 @@ All API responses must follow the defined structure.
 
 ---
 
-## 6. Sprint 5 — API Documentation & Testing
+## 6. Sprint 5 — API Documentation & Testing (DONE)
 
 ### Documentation
 
 - [x] (S5-01) Install `knuckleswtf/scribe`
 - [x] (S5-02) Configure Scribe for Sanctum auth
-- [ ] (S5-03) Generate API documentation
-- [ ] (S5-04) Restrict API docs to non-production
+- [x] (S5-03) Generate API documentation
+- [x] (S5-04) Restrict API docs to non-production
 
 ### Testing & Reliability
 
-- [ ] (S5-05) Create API test suite (Pest/PHPUnit)
-- [ ] (S5-06) Test booking workflow
-- [ ] (S5-07) Implement global API rate limiting
-- [ ] (S5-08) Add API logging and monitoring
-- [ ] (S5-09) Finalize API versioning strategy
+- [x] (S5-05) Create API test suite (Pest/PHPUnit)
+- [x] (S5-06) Test booking workflow
+- [x] (S5-07) Implement global API rate limiting
+- [x] (S5-08) Add API logging and monitoring
+- [x] (S5-09) Finalize API versioning strategy
 
 ### Admin Tools
 
-- [ ] (S5-10) Build API key management UI
-- [ ] (S5-11) Create example API client code
+- [x] (S5-10) Build API key management UI
+- [x] (S5-11) Create example API client code
 
 ---
 

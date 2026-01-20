@@ -9,11 +9,27 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\BodyParam;
+use Knuckles\Scribe\Attributes\Response;
+use Knuckles\Scribe\Attributes\Authenticated;
 
+#[Group('Authentication', 'API endpoints for user authentication')]
 class AuthController extends Controller
 {
     use ApiResponse;
 
+    /**
+     * Login
+     *
+     * Authenticate a user and receive an API token.
+     *
+     * @unauthenticated
+     */
+    #[BodyParam('email', 'string', 'User email address', required: true, example: 'user@example.com')]
+    #[BodyParam('password', 'string', 'User password', required: true, example: 'password123')]
+    #[Response(['success' => true, 'message' => 'Login successful', 'data' => ['token' => 'your-api-token', 'user' => ['id' => 1, 'name' => 'John Doe', 'email' => 'user@example.com', 'role' => 'admin']]], 200, 'Successful login')]
+    #[Response(['success' => false, 'message' => 'The provided credentials are incorrect.', 'errors' => ['email' => ['The provided credentials are incorrect.']]], 422, 'Invalid credentials')]
     public function login(Request $request): JsonResponse
     {
         $request->validate([
@@ -42,6 +58,13 @@ class AuthController extends Controller
         ], 'Login successful');
     }
 
+    /**
+     * Logout
+     *
+     * Revoke the current API token and log out the user.
+     */
+    #[Authenticated]
+    #[Response(['success' => true, 'message' => 'Logged out successfully', 'data' => null], 200, 'Successful logout')]
     public function logout(Request $request): JsonResponse
     {
         $request->user()->currentAccessToken()->delete();
@@ -49,6 +72,13 @@ class AuthController extends Controller
         return $this->success(null, 'Logged out successfully');
     }
 
+    /**
+     * Get Current User
+     *
+     * Retrieve the authenticated user's profile information.
+     */
+    #[Authenticated]
+    #[Response(['success' => true, 'data' => ['id' => 1, 'name' => 'John Doe', 'email' => 'user@example.com', 'role' => 'admin']], 200, 'User profile')]
     public function user(Request $request): JsonResponse
     {
         return $this->success([

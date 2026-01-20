@@ -1,0 +1,615 @@
+{
+    "variable": [
+        {
+            "id": "baseUrl",
+            "key": "baseUrl",
+            "type": "string",
+            "name": "string",
+            "value": "http:\/\/localhost"
+        }
+    ],
+    "info": {
+        "name": "Event Space Booking System API Documentation",
+        "_postman_id": "86b22889-f16f-4a06-9a09-ed7876354de1",
+        "description": "API for managing event space bookings, calendar events, and staff assignments.",
+        "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
+    },
+    "item": [
+        {
+            "name": "Authentication",
+            "description": "API endpoints for user authentication",
+            "item": [
+                {
+                    "name": "Login",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/login",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/login"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"email\":\"user@example.com\",\"password\":\"password123\"}"
+                        },
+                        "description": "Authenticate a user and receive an API token.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"success\":true,\"message\":\"Login successful\",\"data\":{\"token\":\"your-api-token\",\"user\":{\"id\":1,\"name\":\"John Doe\",\"email\":\"user@example.com\",\"role\":\"admin\"}}}",
+                            "name": "Successful login"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"success\":false,\"message\":\"The provided credentials are incorrect.\",\"errors\":{\"email\":[\"The provided credentials are incorrect.\"]}}",
+                            "name": "Invalid credentials"
+                        }
+                    ]
+                },
+                {
+                    "name": "Logout",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/logout",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/logout"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Revoke the current API token and log out the user."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"success\":true,\"message\":\"Logged out successfully\",\"data\":null}",
+                            "name": "Successful logout"
+                        }
+                    ]
+                },
+                {
+                    "name": "Get Current User",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/user",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/user"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Retrieve the authenticated user's profile information."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"success\":true,\"data\":{\"id\":1,\"name\":\"John Doe\",\"email\":\"user@example.com\",\"role\":\"admin\"}}",
+                            "name": "User profile"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Event Spaces",
+            "description": "Browse available event spaces",
+            "item": [
+                {
+                    "name": "List Event Spaces",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/event-spaces",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/event-spaces"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Get a list of all active event spaces available for booking.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"success\":true,\"data\":[{\"id\":1,\"name\":\"Grand Ballroom\",\"description\":\"Large event hall\",\"capacity\":500,\"location\":\"Building A\",\"amenities\":[\"WiFi\",\"Sound System\"],\"is_active\":true}]}",
+                            "name": "List of event spaces"
+                        }
+                    ]
+                },
+                {
+                    "name": "Get Event Space Details",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/event-spaces\/:eventSpace_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/event-spaces\/:eventSpace_id",
+                            "variable": [
+                                {
+                                    "id": "eventSpace_id",
+                                    "key": "eventSpace_id",
+                                    "value": "1",
+                                    "description": "The ID of the eventSpace."
+                                },
+                                {
+                                    "id": "eventSpace",
+                                    "key": "eventSpace",
+                                    "value": "1",
+                                    "description": "The ID of the event space"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Get detailed information about a specific event space.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"success\":true,\"data\":{\"id\":1,\"name\":\"Grand Ballroom\",\"description\":\"Large event hall with modern facilities\",\"capacity\":500,\"location\":\"Building A\",\"amenities\":[\"WiFi\",\"Sound System\",\"Projector\"],\"is_active\":true}}",
+                            "name": "Event space details"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"success\":false,\"message\":\"Event space not available\"}",
+                            "name": "Space not found or inactive"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Events & Bookings",
+            "description": "Manage events and bookings",
+            "item": [
+                {
+                    "name": "List Events",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/events",
+                            "query": [
+                                {
+                                    "key": "space_id",
+                                    "value": "1",
+                                    "description": "Filter by event space ID",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "start_date",
+                                    "value": "2024-01-01",
+                                    "description": "Filter events starting from this date (Y-m-d)",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "end_date",
+                                    "value": "2024-12-31",
+                                    "description": "Filter events ending before this date (Y-m-d)",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/v1\/events?space_id=1&start_date=2024-01-01&end_date=2024-12-31"
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Get a list of events with optional filters. By default, cancelled events are excluded.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"success\":true,\"data\":[{\"id\":1,\"title\":\"Corporate Meeting\",\"client_name\":\"Acme Corp\",\"start_date\":\"2024-06-15\",\"end_date\":\"2024-06-16\",\"status\":\"confirmed\",\"event_space\":{\"id\":1,\"name\":\"Grand Ballroom\"}}]}",
+                            "name": "List of events"
+                        }
+                    ]
+                },
+                {
+                    "name": "Get Event Details",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/events\/:event_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/events\/:event_id",
+                            "variable": [
+                                {
+                                    "id": "event_id",
+                                    "key": "event_id",
+                                    "value": "1",
+                                    "description": "The ID of the event."
+                                },
+                                {
+                                    "id": "event",
+                                    "key": "event",
+                                    "value": "1",
+                                    "description": "The ID of the event"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Get detailed information about a specific event.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"success\":true,\"data\":{\"id\":1,\"title\":\"Corporate Meeting\",\"description\":\"Annual company meeting\",\"client_name\":\"Acme Corp\",\"client_email\":\"contact@acme.com\",\"start_date\":\"2024-06-15\",\"end_date\":\"2024-06-16\",\"status\":\"confirmed\",\"event_space\":{\"id\":1,\"name\":\"Grand Ballroom\"}}}",
+                            "name": "Event details"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"success\":false,\"message\":\"Event not available\"}",
+                            "name": "Event cancelled or not found"
+                        }
+                    ]
+                },
+                {
+                    "name": "Check Availability",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/events\/check-availability",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/events\/check-availability"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"event_space_id\":1,\"start_date\":\"2024-06-15\",\"end_date\":\"2024-06-16\"}"
+                        },
+                        "description": "Check if a specific event space is available for the given date range.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"success\":true,\"data\":{\"available\":true,\"message\":\"Space is available\"}}",
+                            "name": "Space is available"
+                        },
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"success\":true,\"data\":{\"available\":false,\"message\":\"Space is not available for the selected dates\"}}",
+                            "name": "Space has conflicts"
+                        }
+                    ]
+                },
+                {
+                    "name": "Create Booking",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/bookings",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/bookings"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"event_space_id\":1,\"title\":\"Corporate Annual Meeting\",\"description\":\"Annual company-wide meeting and celebration\",\"client_name\":\"John Smith\",\"client_email\":\"john@example.com\",\"client_phone\":\"+1234567890\",\"start_date\":\"2024-06-15\",\"end_date\":\"2024-06-16\",\"start_time\":\"09:00\",\"end_time\":\"17:00\"}"
+                        },
+                        "description": "Create a new event booking request. The booking will start with 'pending' status and requires admin approval."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 201,
+                            "body": "{\"success\":true,\"message\":\"Booking request created successfully\",\"data\":{\"id\":1,\"title\":\"Corporate Meeting\",\"status\":\"pending\",\"start_date\":\"2024-06-15\",\"end_date\":\"2024-06-16\"}}",
+                            "name": "Booking created"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"success\":false,\"message\":\"Space is not available for the selected dates\"}",
+                            "name": "Date conflict"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Calendar API",
+            "description": "FullCalendar-compatible event calendar endpoints",
+            "item": [
+                {
+                    "name": "Get Calendar Events",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/events\/calendar",
+                            "query": [
+                                {
+                                    "key": "start",
+                                    "value": "2024-01-01",
+                                    "description": "Start date for filtering (Y-m-d)",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "end",
+                                    "value": "2024-12-31",
+                                    "description": "End date for filtering (Y-m-d)",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "space_id",
+                                    "value": "1",
+                                    "description": "Filter by event space ID",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "confirmed",
+                                    "description": "Filter by status (pending, confirmed, completed, cancelled)",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "include_cancelled",
+                                    "value": "",
+                                    "description": "Include cancelled events",
+                                    "disabled": true
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/v1\/events\/calendar?start=2024-01-01&end=2024-12-31&space_id=1&status=confirmed&include_cancelled="
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"start\":\"2026-01-20T04:39:45\",\"end\":\"2026-01-20T04:39:45\",\"status\":\"completed\",\"include_cancelled\":false}"
+                        },
+                        "description": "Retrieve events formatted for FullCalendar. Returns events with proper color coding based on status.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"success\":true,\"message\":\"Calendar events retrieved successfully\",\"data\":[{\"id\":1,\"title\":\"Corporate Meeting\",\"start\":\"2024-06-15\",\"end\":\"2024-06-17\",\"allDay\":true,\"backgroundColor\":\"#10b981\",\"borderColor\":\"#059669\",\"textColor\":\"#ffffff\",\"extendedProps\":{\"status\":\"confirmed\",\"space\":\"Grand Ballroom\",\"client\":\"John Smith\"}}]}",
+                            "name": "Calendar events list"
+                        }
+                    ]
+                },
+                {
+                    "name": "Get Monthly Calendar",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/events\/calendar\/month",
+                            "query": [
+                                {
+                                    "key": "year",
+                                    "value": "2024",
+                                    "description": "The year (2000-2100)",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "month",
+                                    "value": "6",
+                                    "description": "The month (1-12)",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "space_id",
+                                    "value": "1",
+                                    "description": "Filter by event space ID",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "confirmed",
+                                    "description": "Filter by status (pending, confirmed, completed, cancelled)",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "include_cancelled",
+                                    "value": "",
+                                    "description": "Include cancelled events",
+                                    "disabled": true
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/v1\/events\/calendar\/month?year=2024&month=6&space_id=1&status=confirmed&include_cancelled="
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"year\":16,\"month\":11,\"status\":\"cancelled\",\"include_cancelled\":true}"
+                        },
+                        "description": "Retrieve events for a specific month, formatted for FullCalendar.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"success\":true,\"message\":\"Calendar events for month retrieved successfully\",\"data\":{\"year\":2024,\"month\":6,\"month_name\":\"June\",\"start_date\":\"2024-06-01\",\"end_date\":\"2024-06-30\",\"events\":[],\"total_events\":0}}",
+                            "name": "Monthly calendar data"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Staff",
+            "description": "View staff assignments for events",
+            "item": [
+                {
+                    "name": "Get Booking Staff",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/bookings\/:event_id\/staff",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/bookings\/:event_id\/staff",
+                            "variable": [
+                                {
+                                    "id": "event_id",
+                                    "key": "event_id",
+                                    "value": "1",
+                                    "description": "The ID of the event."
+                                },
+                                {
+                                    "id": "event",
+                                    "key": "event",
+                                    "value": "1",
+                                    "description": "The ID of the event\/booking"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Get the list of staff members assigned to a specific event\/booking.\nReturns limited staff information for privacy.",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"success\":true,\"message\":\"Staff retrieved successfully\",\"data\":[{\"id\":1,\"name\":\"Jane Doe\",\"position\":\"Event Coordinator\",\"role\":\"lead\"}]}",
+                            "name": "Staff list"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"success\":false,\"message\":\"Booking not available\"}",
+                            "name": "Booking cancelled or not found"
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "Authorization",
+                "type": "string"
+            }
+        ]
+    }
+}

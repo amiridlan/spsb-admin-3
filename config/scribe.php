@@ -126,23 +126,27 @@ INTRO,
     'strategies' => [
         'metadata' => [
             \Knuckles\Scribe\Extracting\Strategies\Metadata\GetFromDocBlocks::class,
+            \Knuckles\Scribe\Extracting\Strategies\Metadata\GetFromMetadataAttributes::class,
         ],
         'urlParameters' => [
             \Knuckles\Scribe\Extracting\Strategies\UrlParameters\GetFromLaravelAPI::class,
+            \Knuckles\Scribe\Extracting\Strategies\UrlParameters\GetFromUrlParamAttribute::class,
             \Knuckles\Scribe\Extracting\Strategies\UrlParameters\GetFromUrlParamTag::class,
         ],
         'queryParameters' => [
             \Knuckles\Scribe\Extracting\Strategies\QueryParameters\GetFromFormRequest::class,
             \Knuckles\Scribe\Extracting\Strategies\QueryParameters\GetFromInlineValidator::class,
+            \Knuckles\Scribe\Extracting\Strategies\QueryParameters\GetFromQueryParamAttribute::class,
             \Knuckles\Scribe\Extracting\Strategies\QueryParameters\GetFromQueryParamTag::class,
         ],
         'headers' => [
-            \Knuckles\Scribe\Extracting\Strategies\Headers\GetFromRouteRules::class,
+            \Knuckles\Scribe\Extracting\Strategies\Headers\GetFromHeaderAttribute::class,
             \Knuckles\Scribe\Extracting\Strategies\Headers\GetFromHeaderTag::class,
         ],
         'bodyParameters' => [
             \Knuckles\Scribe\Extracting\Strategies\BodyParameters\GetFromFormRequest::class,
             \Knuckles\Scribe\Extracting\Strategies\BodyParameters\GetFromInlineValidator::class,
+            \Knuckles\Scribe\Extracting\Strategies\BodyParameters\GetFromBodyParamAttribute::class,
             \Knuckles\Scribe\Extracting\Strategies\BodyParameters\GetFromBodyParamTag::class,
         ],
         'responses' => [

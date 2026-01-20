@@ -18,8 +18,14 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\HandleAppearance::class,
         ]);
 
+        $middleware->api(append: [
+            \App\Http\Middleware\ApiRateLimiter::class,
+            \App\Http\Middleware\ApiLogger::class,
+        ]);
+
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
+            'restrict.docs' => \App\Http\Middleware\RestrictDocsAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

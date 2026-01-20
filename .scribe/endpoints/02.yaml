@@ -1,0 +1,383 @@
+name: 'Events & Bookings'
+description: 'Manage events and bookings'
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/events
+    metadata:
+      custom: []
+      groupName: 'Events & Bookings'
+      groupDescription: 'Manage events and bookings'
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List Events'
+      description: 'Get a list of events with optional filters. By default, cancelled events are excluded.'
+      authenticated: false
+      deprecated: false
+    headers: []
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      space_id:
+        custom: []
+        name: space_id
+        description: 'Filter by event space ID'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      start_date:
+        custom: []
+        name: start_date
+        description: 'Filter events starting from this date (Y-m-d)'
+        required: false
+        example: '2024-01-01'
+        type: date
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      end_date:
+        custom: []
+        name: end_date
+        description: 'Filter events ending before this date (Y-m-d)'
+        required: false
+        example: '2024-12-31'
+        type: date
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      space_id: 1
+      start_date: '2024-01-01'
+      end_date: '2024-12-31'
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success":true,"data":[{"id":1,"title":"Corporate Meeting","client_name":"Acme Corp","start_date":"2024-06-15","end_date":"2024-06-16","status":"confirmed","event_space":{"id":1,"name":"Grand Ballroom"}}]}'
+        headers: []
+        description: 'List of events'
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/events/{event_id}'
+    metadata:
+      custom: []
+      groupName: 'Events & Bookings'
+      groupDescription: 'Manage events and bookings'
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get Event Details'
+      description: 'Get detailed information about a specific event.'
+      authenticated: false
+      deprecated: false
+    headers: []
+    urlParameters:
+      event_id:
+        custom: []
+        name: event_id
+        description: 'The ID of the event.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      event:
+        custom: []
+        name: event
+        description: 'The ID of the event'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      event_id: 1
+      event: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success":true,"data":{"id":1,"title":"Corporate Meeting","description":"Annual company meeting","client_name":"Acme Corp","client_email":"contact@acme.com","start_date":"2024-06-15","end_date":"2024-06-16","status":"confirmed","event_space":{"id":1,"name":"Grand Ballroom"}}}'
+        headers: []
+        description: 'Event details'
+      -
+        custom: []
+        status: 404
+        content: '{"success":false,"message":"Event not available"}'
+        headers: []
+        description: 'Event cancelled or not found'
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/events/check-availability
+    metadata:
+      custom: []
+      groupName: 'Events & Bookings'
+      groupDescription: 'Manage events and bookings'
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Check Availability'
+      description: 'Check if a specific event space is available for the given date range.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      event_space_id:
+        custom: []
+        name: event_space_id
+        description: 'The ID of the event space to check'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      start_date:
+        custom: []
+        name: start_date
+        description: 'Start date (Y-m-d)'
+        required: true
+        example: '2024-06-15'
+        type: date
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      end_date:
+        custom: []
+        name: end_date
+        description: 'End date (Y-m-d)'
+        required: true
+        example: '2024-06-16'
+        type: date
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      event_space_id: 1
+      start_date: '2024-06-15'
+      end_date: '2024-06-16'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"success":true,"data":{"available":true,"message":"Space is available"}}'
+        headers: []
+        description: 'Space is available'
+      -
+        custom: []
+        status: 200
+        content: '{"success":true,"data":{"available":false,"message":"Space is not available for the selected dates"}}'
+        headers: []
+        description: 'Space has conflicts'
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/bookings
+    metadata:
+      custom: []
+      groupName: 'Events & Bookings'
+      groupDescription: 'Manage events and bookings'
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Create Booking'
+      description: "Create a new event booking request. The booking will start with 'pending' status and requires admin approval."
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_TOKEN}'
+      Content-Type: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      event_space_id:
+        custom: []
+        name: event_space_id
+        description: 'The ID of the event space to book'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      title:
+        custom: []
+        name: title
+        description: 'Event title'
+        required: true
+        example: 'Corporate Annual Meeting'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      description:
+        custom: []
+        name: description
+        description: 'Event description'
+        required: false
+        example: 'Annual company-wide meeting and celebration'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      client_name:
+        custom: []
+        name: client_name
+        description: 'Client/organizer name'
+        required: true
+        example: 'John Smith'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      client_email:
+        custom: []
+        name: client_email
+        description: 'Client email address'
+        required: true
+        example: john@example.com
+        type: email
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      client_phone:
+        custom: []
+        name: client_phone
+        description: 'Client phone number'
+        required: false
+        example: '+1234567890'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      start_date:
+        custom: []
+        name: start_date
+        description: 'Event start date (Y-m-d)'
+        required: true
+        example: '2024-06-15'
+        type: date
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      end_date:
+        custom: []
+        name: end_date
+        description: 'Event end date (Y-m-d)'
+        required: true
+        example: '2024-06-16'
+        type: date
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      start_time:
+        custom: []
+        name: start_time
+        description: 'Event start time (HH:mm)'
+        required: false
+        example: '09:00'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      end_time:
+        custom: []
+        name: end_time
+        description: 'Event end time (HH:mm)'
+        required: false
+        example: '17:00'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      event_space_id: 1
+      title: 'Corporate Annual Meeting'
+      description: 'Annual company-wide meeting and celebration'
+      client_name: 'John Smith'
+      client_email: john@example.com
+      client_phone: '+1234567890'
+      start_date: '2024-06-15'
+      end_date: '2024-06-16'
+      start_time: '09:00'
+      end_time: '17:00'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 201
+        content: '{"success":true,"message":"Booking request created successfully","data":{"id":1,"title":"Corporate Meeting","status":"pending","start_date":"2024-06-15","end_date":"2024-06-16"}}'
+        headers: []
+        description: 'Booking created'
+      -
+        custom: []
+        status: 422
+        content: '{"success":false,"message":"Space is not available for the selected dates"}'
+        headers: []
+        description: 'Date conflict'
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 63fEPDch68V451dZkbgaeav'
+    controller: null
+    method: null
+    route: null
